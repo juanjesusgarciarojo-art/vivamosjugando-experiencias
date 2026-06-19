@@ -1,0 +1,15 @@
+# Dependency directories
+node_modules/
+
+# Local configuration and logs
+.gemini/
+.agents/
+*.log
+npm-debug.log*
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Firebase configuration caches
+.firebase/

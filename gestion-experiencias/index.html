@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuadro de Control — ComoIguales</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+  <!-- ============================================================
+       1. PANTALLA DE ACCESO (LOGIN & REGISTRO INICIAL)
+       ============================================================ -->
+  <div id="authScreen" class="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <img src="../logo-comoiguales.png" alt="ComoIguales">
+        <h2>ComoIguales</h2>
+        <p>Gestión de Experiencias</p>
+      </div>
+
+      <!-- Formulario Login Normal -->
+      <form id="loginForm">
+        <h3>Iniciar Sesión</h3>
+        <div class="form-group">
+          <label for="loginEmail">Email Profesional</label>
+          <input type="email" id="loginEmail" required placeholder="tuemail@comoiguales.com">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Contraseña</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-primary-glow">INGRESAR AL PANEL</button>
+      </form>
+
+      <!-- Formulario Onboarding Primer Administrador (Se muestra dinámicamente si no hay usuarios) -->
+      <form id="setupForm" style="display: none;">
+        <h3>Configurar Primer Administrador</h3>
+        <p class="setup-notice">No se detectó ningún usuario en la plataforma. Registra la primera cuenta de Administrador principal.</p>
+        <div class="form-group">
+          <label for="setupNombre">Nombre Completo</label>
+          <input type="text" id="setupNombre" required placeholder="Ej: Juan Jesús">
+        </div>
+        <div class="form-group">
+          <label for="setupEmail">Email del Administrador</label>
+          <input type="email" id="setupEmail" required placeholder="admin@comoiguales.com">
+        </div>
+        <div class="form-group">
+          <label for="setupPassword">Contraseña de Seguridad</label>
+          <input type="password" id="setupPassword" required minlength="6" placeholder="Mínimo 6 caracteres">
+        </div>
+        <button type="submit" class="btn-setup">CREAR ADMINISTRADOR</button>
+      </form>
+
+      <div id="authError" class="auth-error-msg" style="display: none;"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       2. PANEL DE CONTROL PRINCIPAL (DASHBOARD)
+       ============================================================ -->
+  <div id="dashboardScreen" class="dashboard-container" style="display: none;">
+    
+    <!-- BARRA LATERAL (SIDEBAR) -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="../logo-comoiguales.png" alt="ComoIguales">
+        <div>
+          <h3>ComoIguales</h3>
+          <span>Panel de Gestión</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-menu">
+        <ul>
+          <li>
+            <a href="#" class="nav-item active" data-target="view-inicio">
+              <span class="icon">🏠</span> Inicio
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" data-target="view-calendario">
+              <span class="icon">📅</span> Calendario
+            </a>
+          </li>
+          <li class="admin-only">
+            <a href="#" class="nav-item" data-target="view-buzon">
+              <span class="icon">📥</span> Buzón
+              <span id="badgeBuzon" class="badge" style="display: none;">0</span>
+            </a>
+          </li>
+          <li class="admin-only">
+            <a href="#" class="nav-item" data-target="view-clientes">
+              <span class="icon">👥</span> Clientes
+            </a>
+          </li>
+          <li class="admin-only">
+            <a href="#" class="nav-item" data-target="view-gestores">
+              <span class="icon">🛡️</span> Equipo
+            </a>
+          </li>
+          <li class="admin-only">
+            <a href="#" class="nav-item" data-target="view-auditoria">
+              <span class="icon">📜</span> Auditoría
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Perfil y Salida -->
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <h4 id="userName">Cargando...</h4>
+          <span id="userRole">Rol</span>
+        </div>
+        <button id="logoutBtn" class="btn-logout" title="Cerrar Sesión">➔</button>
+      </div>
+    </aside>
+
+    <!-- ÁREA DE CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+      
+      <!-- HEADER DEL PANEL -->
+      <header class="content-header">
+        <div>
+          <h1 id="viewTitle">Inicio</h1>
+          <p id="viewSubtitle" class="text-muted">Resumen general y próximas tareas</p>
+        </div>
+        <div class="header-actions">
+          <span class="current-date" id="headerDate">-- / -- / ----</span>
+        </div>
+      </header>
+
+      <!-- ==================== VISTA: INICIO ==================== -->
+      <section id="view-inicio" class="dashboard-view active">
+        <!-- Tarjetas de Estadísticas (Admin Only) -->
+        <div class="stats-grid admin-only">
+          <div class="stat-card">
+            <div class="stat-icon magenta">📥</div>
+            <div class="stat-content">
+              <span>Mensajes Nuevos</span>
+              <h3 id="statNuevos">0</h3>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">📅</div>
+            <div class="stat-content">
+              <span>Reservas este mes</span>
+              <h3 id="statReservasMes">0</h3>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon violet">👥</div>
+            <div class="stat-content">
+              <span>Total Clientes</span>
+              <h3 id="statClientes">0</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fila de Actividad Reciente / Próximas Asignaciones -->
+        <div class="dashboard-grid">
+          <!-- Calendario rápido / Próximos eventos -->
+          <div class="dashboard-panel">
+            <div class="panel-header">
+              <h3>Próximas Experiencias Programadas</h3>
+            </div>
+            <div class="panel-body">
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Hora</th>
+                      <th>Experiencia</th>
+                      <th>Cliente</th>
+                      <th>Gestor</th>
+                      <th>Estado</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboardNextEvents">
+                    <tr>
+                      <td colspan="7" class="loading-cell">Cargando próximas experiencias...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumen de solicitudes urgentes (Admin Only) -->
+          <div class="dashboard-panel admin-only">
+            <div class="panel-header">
+              <h3>Solicitudes de Contacto Pendientes</h3>
+            </div>
+            <div class="panel-body" id="dashboardPendingRequests">
+              <p class="text-muted">Cargando solicitudes urgentes...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: CALENDARIO ==================== -->
+      <section id="view-calendario" class="dashboard-view">
+        <div class="calendar-controls">
+          <div class="calendar-month-selector">
+            <button id="prevMonthBtn" class="btn-icon">◀</button>
+            <h2 id="calendarMonthYear">Enero 2026</h2>
+            <button id="nextMonthBtn" class="btn-icon">▶</button>
+          </div>
+          <div class="calendar-legend">
+            <span class="legend-item"><span class="dot enigma"></span> Enigma</span>
+            <span class="legend-item"><span class="dot campamento"></span> Campamento</span>
+            <span class="legend-item"><span class="dot personalizada"></span> A medida</span>
+          </div>
+          <button id="addEventBtn" class="btn-add-event">+ Nueva Reserva</button>
+        </div>
+
+        <div class="calendar-wrapper">
+          <!-- Encabezados de días -->
+          <div class="calendar-weekdays">
+            <div>Lunes</div>
+            <div>Martes</div>
+            <div>Miércoles</div>
+            <div>Jueves</div>
+            <div>Viernes</div>
+            <div>Sábado</div>
+            <div>Domingo</div>
+          </div>
+          <!-- Rejilla de días -->
+          <div class="calendar-days" id="calendarDaysGrid">
+            <!-- Rellenado dinámicamente con JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: BUZÓN ==================== -->
+      <section id="view-buzon" class="dashboard-view admin-only">
+        <div class="mailbox-layout">
+          <!-- Listado de Correos -->
+          <div class="mailbox-list-panel">
+            <div class="mailbox-tabs">
+              <button class="mailbox-tab active" data-status="nuevo">Nuevos</button>
+              <button class="mailbox-tab" data-status="respondido">Respondidos</button>
+              <button class="mailbox-tab" data-status="archivado">Archivados</button>
+            </div>
+            <div class="mailbox-items" id="mailboxItemsList">
+              <p class="loading-text">Cargando bandeja de entrada...</p>
+            </div>
+          </div>
+
+          <!-- Vista de Detalle -->
+          <div class="mailbox-detail-panel" id="mailboxDetailPanel">
+            <div class="no-selection-state">
+              <span>📬</span>
+              <p>Selecciona una solicitud de la bandeja para ver sus detalles</p>
+            </div>
+            <div class="mail-detail-content" style="display: none;" id="mailDetailContent">
+              <!-- Rellenado dinámicamente con JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: CLIENTES ==================== -->
+      <section id="view-clientes" class="dashboard-view admin-only">
+        <div class="filter-bar">
+          <input type="text" id="clientSearch" class="search-input" placeholder="Buscar por nombre, email o teléfono...">
+          <div class="filter-actions">
+            <select id="clientFilterPromo" class="filter-select">
+              <option value="todos">Todos los clientes</option>
+              <option value="promo">Acepta Promociones</option>
+              <option value="nopromo">No Acepta Promociones</option>
+            </select>
+            <button id="copyEmailsBtn" class="btn-secondary">📋 Copiar Lista Emails</button>
+          </div>
+        </div>
+
+        <div class="table-panel">
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th>Acepta Promo</th>
+                  <th>Consultas</th>
+                  <th>Exp. Jugadas</th>
+                  <th>Notas / Campañas</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="clientsTableBody">
+                <tr>
+                  <td colspan="8" class="loading-cell">Cargando base de datos de clientes...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: EQUIPO ==================== -->
+      <section id="view-gestores" class="dashboard-view admin-only">
+        <div class="gestores-layout">
+          <!-- Lista de Gestores -->
+          <div class="gestores-list-panel">
+            <div class="panel-header">
+              <h3>Miembros del Equipo</h3>
+            </div>
+            <div class="gestores-cards-grid" id="gestoresCardsList">
+              <p class="loading-text">Cargando equipo de gestores...</p>
+            </div>
+          </div>
+
+          <!-- Añadir Gestor -->
+          <div class="gestor-add-panel">
+            <div class="panel-header">
+              <h3>Dar de Alta Gestor / Admin</h3>
+            </div>
+            <form id="addGestorForm" class="panel-body-form">
+              <div class="form-group">
+                <label for="gestorNombre">Nombre Completo</label>
+                <input type="text" id="gestorNombre" required placeholder="Ej: Carlos Gómez">
+              </div>
+              <div class="form-group">
+                <label for="gestorEmail">Email Corporativo</label>
+                <input type="email" id="gestorEmail" required placeholder="carlos@comoiguales.com">
+              </div>
+              <div class="form-group">
+                <label for="gestorTelefono">Teléfono</label>
+                <input type="tel" id="gestorTelefono" required placeholder="Ej: 600000000">
+              </div>
+              <div class="form-group">
+                <label for="gestorPassword">Contraseña Temporal</label>
+                <input type="password" id="gestorPassword" required minlength="6" placeholder="Mínimo 6 caracteres">
+              </div>
+              <div class="form-group">
+                <label for="gestorRole">Rol en la Plataforma</label>
+                <select id="gestorRole">
+                  <option value="gestor">Gestor (Acceso limitado a su agenda)</option>
+                  <option value="admin">Administrador (Acceso total)</option>
+                </select>
+              </div>
+              <button type="submit" class="btn-primary-glow">REGISTRAR EN EL SISTEMA</button>
+              <div id="addGestorMsg" class="success-msg" style="display: none;"></div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: AUDITORÍA ==================== -->
+      <section id="view-auditoria" class="dashboard-view admin-only">
+        <div class="audit-timeline-panel">
+          <div class="panel-header">
+            <h3>Historial de Actividad de la Plataforma</h3>
+            <button id="clearAuditBtn" class="btn-danger" style="display:none;">Limpiar Historial</button>
+          </div>
+          <div class="audit-list" id="auditListItems">
+            <p class="loading-text">Cargando registros de auditoría...</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============================================================
+       3. MODALES DE SISTEMA
+       ============================================================ -->
+
+  <!-- MODAL: DETALLES DE DÍA / EVENTOS -->
+  <div id="dayModal" class="modal">
+    <div class="modal-content glass">
+      <span class="modal-close" id="closeDayModalBtn">&times;</span>
+      <h2 id="dayModalTitle">Eventos el -- de -----</h2>
+      <div id="dayEventsList" class="day-events-list">
+        <!-- Lista de reservas de ese día -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR / EDITAR RESERVA -->
+  <div id="eventFormModal" class="modal">
+    <div class="modal-content glass">
+      <span class="modal-close" id="closeEventFormModalBtn">&times;</span>
+      <h2 id="eventFormModalTitle">Nueva Reserva de Experiencia</h2>
+      <form id="reservationForm">
+        <input type="hidden" id="reservaId">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="resName">Nombre del Cliente</label>
+            <input type="text" id="resName" required placeholder="Nombre del cliente">
+          </div>
+          <div class="form-group">
+            <label for="resEmail">Email del Cliente</label>
+            <input type="email" id="resEmail" required placeholder="cliente@correo.com">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="resPhone">Teléfono del Cliente</label>
+            <input type="tel" id="resPhone" required placeholder="Ej: 660512406">
+          </div>
+          <div class="form-group">
+            <label for="resExp">Experiencia Contratada</label>
+            <select id="resExp" required>
+              <option value="Operación Enigma">🕵️‍♂️ Operación Enigma</option>
+              <option value="Campamento de Verano">🏕️ Gymkana Campamento</option>
+              <option value="A Medida - Despedida">🎉 A Medida - Despedida</option>
+              <option value="A Medida - Cumpleanos">🎂 A Medida - Cumpleaños</option>
+              <option value="A Medida - Empresa">🏢 A Medida - Empresa</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="resDate">Fecha del Evento</label>
+            <input type="date" id="resDate" required>
+          </div>
+          <div class="form-group">
+            <label for="resTime">Hora del Evento</label>
+            <input type="time" id="resTime" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="resGestor">Gestor Asignado (Responsable)</label>
+          <select id="resGestor" required>
+            <option value="">Selecciona un gestor...</option>
+            <!-- Rellenado dinámicamente con la lista de usuarios_dashboard -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="resNotes">Notas Internas / Comentarios del Evento</label>
+          <textarea id="resNotes" placeholder="Detalles específicos del grupo, pista especial, personalización, etc..."></textarea>
+        </div>
+
+        <div class="form-group" id="resStatusGroup" style="display: none;">
+          <label for="resStatus">Estado del Evento</label>
+          <select id="resStatus">
+            <option value="pendiente">Pendiente</option>
+            <option value="completada">Completada</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="gestorCloseNotesGroup" style="display: none;">
+          <label for="resNotesSesion" style="color: var(--color-green);">Notas Post-Juego (Obligatorio para finalizar)</label>
+          <textarea id="resNotesSesion" placeholder="Escribe un reporte de cómo fue la sesión, cuántos asistieron, incidencias..."></textarea>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" id="deleteReservaBtn" class="btn-danger" style="display: none;">Eliminar Reserva</button>
+          <button type="submit" id="saveReservaBtn" class="btn-primary-glow">Guardar Reserva</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts principales como Módulo -->
+  <script type="module" src="dashboard.js"></script>
+</body>
+</html>
