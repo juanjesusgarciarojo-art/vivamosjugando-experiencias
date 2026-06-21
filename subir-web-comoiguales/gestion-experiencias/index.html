@@ -100,6 +100,11 @@
               <span class="icon">🎮</span> Experiencias
             </a>
           </li>
+          <li>
+            <a href="#" class="nav-item" data-target="view-correo">
+              <span class="icon">✉️</span> Correo
+            </a>
+          </li>
           <li class="admin-only">
             <a href="#" class="nav-item" data-target="view-buzon">
               <span class="icon">📥</span> Buzón
@@ -347,7 +352,7 @@
                 <input type="text" id="gestorNombre" required placeholder="Ej: Carlos Gómez">
               </div>
               <div class="form-group">
-                <label for="gestorEmail">Email Corporativo</label>
+                <label for="gestorEmail">Email Acceso Dashboard</label>
                 <input type="email" id="gestorEmail" required placeholder="carlos@comoiguales.com">
               </div>
               <div class="form-group">
@@ -355,10 +360,18 @@
                 <input type="tel" id="gestorTelefono" required placeholder="Ej: 600000000">
               </div>
               <div class="form-group">
-                <label for="gestorPassword">Contraseña Temporal</label>
+                <label for="gestorPassword">Contraseña Temporal Dashboard</label>
                 <input type="password" id="gestorPassword" required minlength="6" placeholder="Mínimo 6 caracteres">
               </div>
               <div class="form-group">
+                <label for="gestorCorreoCorp">Correo Corporativo Asignado</label>
+                <input type="email" id="gestorCorreoCorp" placeholder="Ej: carlos@vivamosjugando.com">
+              </div>
+              <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                <input type="checkbox" id="gestorAccesoContacto" style="width: auto; margin: 0;">
+                <label for="gestorAccesoContacto" style="margin: 0; cursor: pointer;">Permitir acceso a buzón general (contacto@)</label>
+              </div>
+              <div class="form-group" style="margin-top: 15px;">
                 <label for="gestorRole">Rol en la Plataforma</label>
                 <select id="gestorRole">
                   <option value="gestor">Gestor (Acceso limitado a su agenda)</option>
@@ -367,8 +380,23 @@
               </div>
               <button type="submit" class="btn-primary-glow">REGISTRAR EN EL SISTEMA</button>
               <div id="addGestorMsg" class="success-msg" style="display: none;"></div>
+          </div>
+
+          <!-- Configurar Correo Genérico -->
+          <div class="gestor-add-panel" style="margin-top: 20px;">
+            <div class="panel-header">
+              <h3>Buzón de Contacto General</h3>
+            </div>
+            <form id="configGeneralEmailForm" class="panel-body-form">
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label for="contactoEmailPass">Contraseña de contacto@vivamosjugando.com</label>
+                <input type="password" id="contactoEmailPass" required placeholder="Contraseña de la cuenta corporativa">
+              </div>
+              <button type="submit" class="btn-primary-glow">ACTUALIZAR CONTRASEÑA</button>
+              <div id="configEmailMsg" class="success-msg" style="display: none; margin-top: 10px;"></div>
             </form>
           </div>
+
         </div>
       </section>
 
@@ -382,6 +410,112 @@
           <div class="audit-list" id="auditListItems">
             <p class="loading-text">Cargando registros de auditoría...</p>
           </div>
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: CORREO CORPORATIVO ==================== -->
+      <section id="view-correo" class="dashboard-view">
+        
+        <!-- PANTALLA: DESBLOQUEO DE CORREO -->
+        <div id="email-unlock-screen" class="email-unlock-container glass text-center" style="padding: 60px 20px;">
+          <div class="email-unlock-box" style="max-width: 450px; margin: 0 auto;">
+            <span class="email-unlock-icon" style="font-size: 3.5rem; display: block; margin-bottom: 20px;">✉️</span>
+            <h3 style="margin-bottom: 10px;">Bandeja de Correo Corporativo</h3>
+            <p id="email-unlock-desc" style="color: var(--text-muted); margin-bottom: 25px;">Introduce la contraseña de tu correo corporativo asignado para acceder a los mensajes.</p>
+            <div id="email-unlock-form" class="panel-body-form">
+              <div class="form-group" style="margin-bottom: 15px;">
+                <input type="password" id="email-session-password" placeholder="Contraseña de correo" required class="w-100" style="padding: 12px; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff;">
+              </div>
+              <button id="btn-unlock-email" class="btn-primary-glow w-100" style="padding: 12px; font-weight: bold;">ACCEDER A LA BANDEJA</button>
+              <div id="email-unlock-error" class="auth-error-msg" style="display: none; margin-top: 15px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANTALLA: BANDEJA DE ENTRADA (Muestra solo tras desbloquear) -->
+        <div id="email-workspace-screen" style="display: none; height: calc(100vh - 120px);" class="email-workspace-layout">
+          
+          <!-- Selector de buzones en la parte superior -->
+          <div class="email-mailbox-selector-bar glass" style="padding: 10px 15px; border-bottom: 1px solid var(--border-color); display: flex; gap: 10px;">
+            <div class="mailbox-tabs" id="mailboxTabsContainer" style="display: flex; gap: 10px; width: 100%;">
+              <!-- Se rellenará dinámicamente con las pestañas del correo personal y genérico -->
+            </div>
+          </div>
+
+          <div class="email-main-split" style="display: flex; height: calc(100% - 55px); overflow: hidden;">
+            <!-- Columna Izquierda: Lista de correos y carpetas -->
+            <div class="email-list-panel glass" style="width: 320px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; background: rgba(15,15,25,0.4);">
+              <div class="email-folder-nav" style="padding: 12px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border-color);">
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn-folder active w-50" data-folder="INBOX" style="padding: 8px 10px; font-size: 0.85rem; border-radius: 6px; border: none; background: var(--color-violet); color: #fff; cursor: pointer;">📥 Recibidos</button>
+                  <button class="btn-folder w-50" data-folder="Sent" style="padding: 8px 10px; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer;">📤 Enviados</button>
+                </div>
+                <button id="btn-compose-email" class="btn-compose" style="padding: 10px; font-weight: bold; border-radius: 6px; border: 1px dashed var(--color-violet); background: rgba(100,50,250,0.1); color: var(--color-violet); cursor: pointer; text-align: center;">+ Redactar Nuevo</button>
+              </div>
+              <div class="email-list-scroll" id="emailListScroll" style="flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Listado de correos cargado dinámicamente -->
+                <p class="loading-text" style="color: var(--text-muted); text-align: center; margin-top: 20px;">Cargando correos...</p>
+              </div>
+            </div>
+
+            <!-- Columna Derecha: Visor de correo y respuesta -->
+            <div class="email-viewer-panel glass" id="emailViewerPanel" style="flex: 1; display: flex; flex-direction: column; background: rgba(10,10,15,0.2); overflow-y: auto;">
+              <div id="email-viewer-empty" class="text-center" style="padding-top: 150px; text-align: center; width: 100%;">
+                <span style="font-size: 3.5rem; display: block; color: var(--text-muted);">📥</span>
+                <p style="color: var(--text-muted); margin-top: 15px; font-size: 1rem;">Selecciona un correo de la lista para leer su contenido.</p>
+              </div>
+              
+              <!-- Visor de contenido -->
+              <div id="email-viewer-content" style="display: none; padding: 25px; flex: 1; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;">
+                <div class="email-viewer-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                  <h3 id="email-view-subject" style="font-size: 1.4rem; color: #fff; margin-bottom: 10px;">Asunto del correo</h3>
+                  <div class="email-view-meta" style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted);">
+                    <span id="email-view-from">De: --</span>
+                    <span id="email-view-date">Fecha: --</span>
+                  </div>
+                </div>
+                <div class="email-viewer-body" id="emailViewBody" style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); min-height: 200px; color: #eee; font-size: 0.95rem; line-height: 1.6; overflow-x: auto;">
+                  <!-- Contenido del cuerpo del mensaje -->
+                </div>
+                <div class="email-viewer-reply-box" id="emailReplyBox" style="border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                  <h4 style="color: #fff; font-size: 1rem;">Responder a este correo</h4>
+                  <textarea id="email-reply-text" placeholder="Escribe aquí tu respuesta..." style="min-height: 100px; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; font-size: 0.95rem; width: 100%; box-sizing: border-box;"></textarea>
+                  <div class="reply-actions" style="display: flex; align-items: center;">
+                    <button id="btn-send-email-reply" class="btn-primary-glow" style="padding: 10px 20px; font-weight: bold; border-radius: 6px;">Enviar Respuesta</button>
+                    <div id="email-reply-status" style="margin-left: 15px; font-size: 0.9rem;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Formulario de Redacción Nuevo -->
+              <div id="email-composer-content" style="display: none; padding: 25px; flex: 1; display: flex; flex-direction: column; gap: 20px;">
+                <div class="email-viewer-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                  <h3 style="font-size: 1.3rem; color: #fff;">Nuevo Mensaje Corporativo</h3>
+                </div>
+                <div class="email-composer-form panel-body-form" style="display: flex; flex-direction: column; gap: 15px;">
+                  <div class="form-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label for="email-to">Para:</label>
+                    <input type="email" id="email-to" placeholder="ejemplo@correo.com" required style="padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff;">
+                  </div>
+                  <div class="form-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label for="email-subject">Asunto:</label>
+                    <input type="text" id="email-subject" placeholder="Escribe el asunto aquí" required style="padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff;">
+                  </div>
+                  <div class="form-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label for="email-body">Mensaje:</label>
+                    <textarea id="email-body" style="min-height: 220px; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; font-size: 0.95rem; width: 100%; box-sizing: border-box;" placeholder="Escribe tu mensaje..."></textarea>
+                  </div>
+                  <div class="reply-actions" style="display: flex; align-items: center; gap: 10px;">
+                    <button id="btn-send-new-email" class="btn-primary-glow" style="padding: 10px 20px; font-weight: bold; border-radius: 6px;">Enviar Correo</button>
+                    <button id="btn-cancel-compose" class="btn-secondary" style="padding: 10px 20px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer;">Cancelar</button>
+                    <div id="email-compose-status" style="margin-left: 15px; font-size: 0.9rem;"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -399,6 +533,10 @@
             <div class="exp-card-body">
               <h3>Operación Enigma</h3>
               <p>Escape room interactivo exterior y juego de espionaje en vivo. Supervisa el progreso de los escuadrones, valida códigos y comunícate por el canal de emergencias en tiempo real.</p>
+              <div style="margin-top: 1rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.8rem; display: flex; flex-direction: column; gap: 4px;">
+                <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Enlace para Jugadores:</span>
+                <a href="https://www.vivamosjugando.com/operacion-enigma/mision/" target="_blank" style="color: var(--color-violet); text-decoration: none; word-break: break-all; font-family: monospace; font-weight: bold;">www.vivamosjugando.com/operacion-enigma/mision/</a>
+              </div>
             </div>
             <div class="exp-card-footer">
               <button id="btn-manage-enigma" class="btn-primary-glow w-100">Gestionar Operación</button>

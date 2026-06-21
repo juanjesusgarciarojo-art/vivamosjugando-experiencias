@@ -252,6 +252,28 @@ function switchView(viewId) {
     stopEnigmaListeners();
   }
 
+  // Comportamiento del Correo Corporativo al entrar
+  if (viewId === "view-correo") {
+    emailState.personalEmail = currentUserProfile.correo_corporativo || "";
+    emailState.hasAccessContacto = currentUserProfile.rol === "admin" || currentUserProfile.acceso_correo_contacto === true;
+
+    const unlockScreen = document.getElementById("email-unlock-screen");
+    const workspaceScreen = document.getElementById("email-workspace-screen");
+
+    if (!emailState.personalEmail && emailState.hasAccessContacto) {
+      emailState.isUnlocked = true;
+      emailState.currentActiveMailbox = "contacto@vivamosjugando.com";
+      loadEmailWorkspace();
+    } else if (emailState.isUnlocked) {
+      loadEmailWorkspace();
+    } else {
+      unlockScreen.style.display = "block";
+      workspaceScreen.style.display = "none";
+      document.getElementById("email-session-password").value = "";
+      document.getElementById("email-unlock-error").style.display = "none";
+    }
+  }
+
   // Actualizar Título
   const titleMap = {
     "view-inicio": ["Inicio", "Resumen general y próximas tareas"],
@@ -260,7 +282,8 @@ function switchView(viewId) {
     "view-buzon": ["Buzón de Solicitudes", "Gestiona correos de información y encargos"],
     "view-clientes": ["Base de Datos de Clientes", "Fidelización de usuarios y marketing de ComoIguales"],
     "view-gestores": ["Gestión del Equipo", "Lista de gestores y alta de nuevos miembros"],
-    "view-auditoria": ["Historial de Auditoría", "Registro en tiempo real de operaciones administrativas"]
+    "view-auditoria": ["Historial de Auditoría", "Registro en tiempo real de operaciones administrativas"],
+    "view-correo": ["Correo Corporativo", "Bandeja de entrada integrada de la organización"]
   };
 
   if (titleMap[viewId]) {
@@ -293,6 +316,8 @@ function setupDashboardUI() {
   setupClientEvents();
   setupGestoresForm();
   setupEnigmaEvents();
+  setupEmailEvents();
+  setupGeneralEmailConfigForm();
 }
 
 // Registrar Auditoría
@@ -1282,6 +1307,8 @@ function renderGestores() {
       <span class="gestor-card-role">${g.rol}</span>
       <div class="gestor-card-contact">✉ ${g.email}</div>
       <div class="gestor-card-contact">📞 ${g.telefono || 'Sin teléfono'}</div>
+      ${g.correo_corporativo ? `<div class="gestor-card-contact" style="margin-top: 5px; color: var(--color-violet); font-size: 0.82rem;">💼 ${g.correo_corporativo}</div>` : ''}
+      <div class="gestor-card-contact" style="font-size: 0.82rem; color: #aaa;">📬 Buzón Contacto: ${g.acceso_correo_contacto ? '✅ Permitido' : '❌ Restringido'}</div>
     `;
 
     cardsWrap.appendChild(card);
@@ -1299,6 +1326,8 @@ function setupGestoresForm() {
     const telefono = document.getElementById("gestorTelefono").value.trim();
     const pass = document.getElementById("gestorPassword").value;
     const rol = document.getElementById("gestorRole").value;
+    const correoCorp = document.getElementById("gestorCorreoCorp").value.trim();
+    const accesoContacto = document.getElementById("gestorAccesoContacto").checked;
 
     const msgDiv = document.getElementById("addGestorMsg");
     msgDiv.style.display = "none";
@@ -1320,6 +1349,8 @@ function setupGestoresForm() {
         email,
         telefono,
         rol,
+        correo_corporativo: correoCorp || "",
+        acceso_correo_contacto: accesoContacto,
         fecha_creacion: serverTimestamp()
       });
 
@@ -2065,3 +2096,510 @@ window.eliminarContactoEnigma = async function (docId) {
     }
   }
 };
+
+// ============================================================
+// 9. INTEGRACIÓN DE CORREO CORPORATIVO (IMAP/SMTP)
+// ============================================================
+
+let emailState = {
+  personalEmail: "",
+  personalPassword: "",
+  hasAccessContacto: false,
+  contactoPassword: "",
+  currentActiveMailbox: "",
+  currentActiveFolder: "INBOX",
+  emails: [],
+  activeEmail: null,
+  isUnlocked: false
+};
+
+function setupEmailEvents() {
+  const btnUnlock = document.getElementById("btn-unlock-email");
+  const sessionPassInput = document.getElementById("email-session-password");
+  
+  if (btnUnlock && sessionPassInput) {
+    btnUnlock.addEventListener("click", handleEmailUnlock);
+    sessionPassInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleEmailUnlock();
+    });
+  }
+
+  // Botones de Navegación de Carpetas
+  document.querySelectorAll(".btn-folder").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      document.querySelectorAll(".btn-folder").forEach(b => {
+        b.style.background = "transparent";
+        b.style.color = "var(--text-muted)";
+        b.style.border = "1px solid var(--border-color)";
+      });
+      
+      btn.style.background = "var(--color-violet)";
+      btn.style.color = "#fff";
+      btn.style.border = "none";
+      
+      emailState.currentActiveFolder = btn.getAttribute("data-folder");
+      refreshEmailList();
+    });
+  });
+
+  // Botones de Redacción
+  const btnCompose = document.getElementById("btn-compose-email");
+  const btnCancelCompose = document.getElementById("btn-cancel-compose");
+  if (btnCompose) {
+    btnCompose.addEventListener("click", () => {
+      document.getElementById("email-viewer-empty").style.display = "none";
+      document.getElementById("email-viewer-content").style.display = "none";
+      document.getElementById("email-composer-content").style.display = "block";
+    });
+  }
+  if (btnCancelCompose) {
+    btnCancelCompose.addEventListener("click", () => {
+      document.getElementById("email-composer-content").style.display = "none";
+      if (emailState.activeEmail) {
+        document.getElementById("email-viewer-content").style.display = "flex";
+      } else {
+        document.getElementById("email-viewer-empty").style.display = "block";
+      }
+    });
+  }
+
+  // Botón Enviar Nuevo Correo
+  const btnSendNew = document.getElementById("btn-send-new-email");
+  if (btnSendNew) {
+    btnSendNew.addEventListener("click", sendNewEmail);
+  }
+
+  // Botón Enviar Respuesta
+  const btnSendReply = document.getElementById("btn-send-email-reply");
+  if (btnSendReply) {
+    btnSendReply.addEventListener("click", sendEmailReply);
+  }
+}
+
+async function handleEmailUnlock() {
+  const passInput = document.getElementById("email-session-password");
+  const errDiv = document.getElementById("email-unlock-error");
+  const password = passInput.value;
+  
+  if (!password) {
+    errDiv.innerText = "Por favor, introduce tu contraseña.";
+    errDiv.style.display = "block";
+    return;
+  }
+
+  errDiv.innerText = "Verificando...";
+  errDiv.style.color = "var(--color-violet)";
+  errDiv.style.display = "block";
+
+  try {
+    const response = await fetch("mail_bridge.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "fetch_emails",
+        email: emailState.personalEmail,
+        password: password,
+        folder: "INBOX"
+      })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      emailState.personalPassword = password;
+      emailState.isUnlocked = true;
+      emailState.currentActiveMailbox = emailState.personalEmail;
+      errDiv.style.display = "none";
+      loadEmailWorkspace();
+    } else {
+      errDiv.innerText = "Error: " + data.error;
+      errDiv.style.color = "#f87171";
+    }
+  } catch (err) {
+    console.error("Error al desbloquear correo:", err);
+    errDiv.innerText = "Error de conexión con el servidor.";
+    errDiv.style.color = "#f87171";
+  }
+}
+
+async function loadEmailWorkspace() {
+  const unlockScreen = document.getElementById("email-unlock-screen");
+  const workspaceScreen = document.getElementById("email-workspace-screen");
+  
+  unlockScreen.style.display = "none";
+  workspaceScreen.style.display = "flex";
+
+  // Rellenar pestañas de buzones
+  const tabsContainer = document.getElementById("mailboxTabsContainer");
+  tabsContainer.innerHTML = "";
+
+  // 1. Pestaña Correo Personal (si tiene)
+  if (emailState.personalEmail) {
+    const pTab = document.createElement("button");
+    pTab.className = "mailbox-tab" + (emailState.currentActiveMailbox === emailState.personalEmail ? " active" : "");
+    pTab.innerText = `💼 Mi Correo (${emailState.personalEmail})`;
+    pTab.addEventListener("click", () => {
+      switchMailbox(emailState.personalEmail);
+    });
+    tabsContainer.appendChild(pTab);
+  }
+
+  // 2. Pestaña Buzón General
+  if (emailState.hasAccessContacto) {
+    const cTab = document.createElement("button");
+    cTab.className = "mailbox-tab" + (emailState.currentActiveMailbox === "contacto@vivamosjugando.com" ? " active" : "");
+    cTab.innerText = "📢 Buzón de Soporte (contacto@)";
+    cTab.addEventListener("click", () => {
+      switchMailbox("contacto@vivamosjugando.com");
+    });
+    tabsContainer.appendChild(cTab);
+  }
+
+  refreshEmailList();
+}
+
+function switchMailbox(mailboxName) {
+  emailState.currentActiveMailbox = mailboxName;
+  document.querySelectorAll(".mailbox-tab").forEach(tab => {
+    if (tab.innerText.includes(mailboxName === "contacto@vivamosjugando.com" ? "Buzón" : "Mi Correo")) {
+      tab.classList.add("active");
+    } else {
+      tab.classList.remove("active");
+    }
+  });
+
+  // Reset folder to INBOX
+  emailState.currentActiveFolder = "INBOX";
+  document.querySelectorAll(".btn-folder").forEach(btn => {
+    if (btn.getAttribute("data-folder") === "INBOX") {
+      btn.style.background = "var(--color-violet)";
+      btn.style.color = "#fff";
+      btn.style.border = "none";
+    } else {
+      btn.style.background = "transparent";
+      btn.style.color = "var(--text-muted)";
+      btn.style.border = "1px solid var(--border-color)";
+    }
+  });
+
+  // Limpiar vista
+  document.getElementById("email-viewer-empty").style.display = "block";
+  document.getElementById("email-viewer-content").style.display = "none";
+  document.getElementById("email-composer-content").style.display = "none";
+  emailState.activeEmail = null;
+
+  refreshEmailList();
+}
+
+async function refreshEmailList() {
+  const listContainer = document.getElementById("emailListScroll");
+  listContainer.innerHTML = '<p class="loading-text" style="color: var(--text-muted); text-align: center; margin-top: 20px;">Cargando correos...</p>';
+
+  const currentMailbox = emailState.currentActiveMailbox;
+  let currentPassword = "";
+
+  if (currentMailbox === emailState.personalEmail) {
+    currentPassword = emailState.personalPassword;
+  } else {
+    // Cuenta genérica: Cargar de base de datos
+    if (!emailState.contactoPassword) {
+      try {
+        const docRef = doc(db, "configuraciones_sistema", "email_config");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          emailState.contactoPassword = docSnap.data().contrasena;
+        } else {
+          listContainer.innerHTML = '<p class="loading-text" style="color: #f87171;">El buzón general no ha sido configurado en el Dashboard.</p>';
+          return;
+        }
+      } catch (err) {
+        console.error("Error al obtener contraseña de contacto:", err);
+        listContainer.innerHTML = '<p class="loading-text" style="color: #f87171;">Error al acceder al buzón general.</p>';
+        return;
+      }
+    }
+    currentPassword = emailState.contactoPassword;
+  }
+
+  try {
+    const response = await fetch("mail_bridge.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "fetch_emails",
+        email: currentMailbox,
+        password: currentPassword,
+        folder: emailState.currentActiveFolder
+      })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      emailState.emails = data.emails;
+      renderEmailList();
+    } else {
+      listContainer.innerHTML = `<p class="loading-text" style="color: #f87171;">Error: ${data.error}</p>`;
+    }
+  } catch (err) {
+    console.error("Error al refrescar lista de correos:", err);
+    listContainer.innerHTML = '<p class="loading-text" style="color: #f87171;">Error al conectar con la API de correo.</p>';
+  }
+}
+
+function renderEmailList() {
+  const listContainer = document.getElementById("emailListScroll");
+  listContainer.innerHTML = "";
+
+  if (emailState.emails.length === 0) {
+    listContainer.innerHTML = '<p class="loading-text" style="color: var(--text-muted); text-align: center; margin-top: 20px;">Bandeja vacía.</p>';
+    return;
+  }
+
+  emailState.emails.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "email-item" + (item.unseen ? " unread" : "") + (emailState.activeEmail && emailState.activeEmail.msg_id === item.msg_id ? " active" : "");
+    
+    div.innerHTML = `
+      <div class="email-item-header">
+        <span class="email-item-sender">${item.from_name}</span>
+        <span class="email-item-date">${formatEmailDate(item.date)}</span>
+      </div>
+      <div class="email-item-subject">${item.subject}</div>
+    `;
+
+    div.addEventListener("click", () => {
+      document.querySelectorAll(".email-item").forEach(el => el.classList.remove("active"));
+      div.classList.remove("unread");
+      div.classList.add("active");
+      openEmail(item);
+    });
+
+    listContainer.appendChild(div);
+  });
+}
+
+function formatEmailDate(dateStr) {
+  try {
+    const d = new Date(dateStr.replace(' ', 'T'));
+    const now = new Date();
+    if (d.toDateString() === now.toDateString()) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+async function openEmail(emailItem) {
+  document.getElementById("email-viewer-empty").style.display = "none";
+  document.getElementById("email-composer-content").style.display = "none";
+  const contentPanel = document.getElementById("email-viewer-content");
+  contentPanel.style.display = "flex";
+
+  const subjectEl = document.getElementById("email-view-subject");
+  const fromEl = document.getElementById("email-view-from");
+  const dateEl = document.getElementById("email-view-date");
+  const bodyEl = document.getElementById("emailViewBody");
+  const replyBox = document.getElementById("emailReplyBox");
+
+  subjectEl.innerText = emailItem.subject;
+  fromEl.innerText = `De: ${emailItem.from_name} <${emailItem.from_email}>`;
+  dateEl.innerText = `Fecha: ${emailItem.date}`;
+  bodyEl.innerHTML = '<p class="loading-text" style="color: var(--text-muted); text-align: center; margin-top: 20px;">Cargando contenido...</p>';
+
+  if (emailState.currentActiveFolder === "Sent") {
+    replyBox.style.display = "none";
+  } else {
+    replyBox.style.display = "flex";
+  }
+
+  document.getElementById("email-reply-text").value = "";
+  document.getElementById("email-reply-status").innerText = "";
+
+  const currentMailbox = emailState.currentActiveMailbox;
+  const currentPassword = (currentMailbox === emailState.personalEmail) ? emailState.personalPassword : emailState.contactoPassword;
+
+  try {
+    const response = await fetch("mail_bridge.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "fetch_body",
+        email: currentMailbox,
+        password: currentPassword,
+        msg_id: emailItem.msg_id
+      })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      emailState.activeEmail = { ...emailItem, message_id: data.message_id };
+      bodyEl.innerHTML = data.html;
+    } else {
+      bodyEl.innerHTML = `<p style="color: #f87171;">Error al recuperar cuerpo: ${data.error}</p>`;
+    }
+  } catch (err) {
+    console.error("Error al abrir correo:", err);
+    bodyEl.innerHTML = '<p style="color: #f87171;">Error de conexión al cargar mensaje.</p>';
+  }
+}
+
+async function sendEmailReply() {
+  const replyText = document.getElementById("email-reply-text").value.trim();
+  const statusDiv = document.getElementById("email-reply-status");
+  
+  if (!replyText) {
+    statusDiv.innerText = "Por favor, escribe una respuesta.";
+    statusDiv.style.color = "#f87171";
+    return;
+  }
+
+  statusDiv.innerText = "Enviando respuesta...";
+  statusDiv.style.color = "var(--color-violet)";
+
+  const currentMailbox = emailState.currentActiveMailbox;
+  const currentPassword = (currentMailbox === emailState.personalEmail) ? emailState.personalPassword : emailState.contactoPassword;
+
+  const originalEmail = emailState.activeEmail;
+  const replySubject = originalEmail.subject.toLowerCase().startsWith("re:") ? originalEmail.subject : "Re: " + originalEmail.subject;
+  
+  const htmlBody = `<div>${replyText.replace(/\n/g, '<br>')}</div><br><hr><blockquote>${document.getElementById("emailViewBody").innerHTML}</blockquote>`;
+
+  try {
+    const response = await fetch("mail_bridge.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "send_email",
+        email: currentMailbox,
+        password: currentPassword,
+        to: originalEmail.from_email,
+        subject: replySubject,
+        body: htmlBody,
+        reply_to_id: originalEmail.message_id
+      })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      statusDiv.innerText = "✓ Respuesta enviada con éxito.";
+      statusDiv.style.color = "#33ff33";
+      document.getElementById("email-reply-text").value = "";
+      
+      await logAction(
+        currentUserProfile.nombre,
+        currentUserProfile.rol,
+        "Responder Correo",
+        `Respondió al correo "${originalEmail.subject}" de ${originalEmail.from_email}`
+      );
+    } else {
+      statusDiv.innerText = "Error: " + data.error;
+      statusDiv.style.color = "#f87171";
+    }
+  } catch (err) {
+    console.error("Error al enviar respuesta:", err);
+    statusDiv.innerText = "Error al conectar con el servidor.";
+    statusDiv.style.color = "#f87171";
+  }
+}
+
+async function sendNewEmail() {
+  const to = document.getElementById("email-to").value.trim();
+  const subject = document.getElementById("email-subject").value.trim();
+  const bodyText = document.getElementById("email-body").value.trim();
+  const statusDiv = document.getElementById("email-compose-status");
+
+  if (!to || !subject || !bodyText) {
+    statusDiv.innerText = "Por favor, rellena todos los campos.";
+    statusDiv.style.color = "#f87171";
+    return;
+  }
+
+  statusDiv.innerText = "Enviando mensaje...";
+  statusDiv.style.color = "var(--color-violet)";
+
+  const currentMailbox = emailState.currentActiveMailbox;
+  const currentPassword = (currentMailbox === emailState.personalEmail) ? emailState.personalPassword : emailState.contactoPassword;
+
+  const htmlBody = `<div>${bodyText.replace(/\n/g, '<br>')}</div>`;
+
+  try {
+    const response = await fetch("mail_bridge.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "send_email",
+        email: currentMailbox,
+        password: currentPassword,
+        to: to,
+        subject: subject,
+        body: htmlBody
+      })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      statusDiv.innerText = "✓ Correo enviado con éxito.";
+      statusDiv.style.color = "#33ff33";
+      
+      document.getElementById("email-to").value = "";
+      document.getElementById("email-subject").value = "";
+      document.getElementById("email-body").value = "";
+      
+      await logAction(
+        currentUserProfile.nombre,
+        currentUserProfile.rol,
+        "Enviar Correo",
+        `Envió un correo a ${to} con asunto: "${subject}"`
+      );
+
+      setTimeout(() => {
+        document.getElementById("email-composer-content").style.display = "none";
+        document.getElementById("email-viewer-empty").style.display = "block";
+      }, 1500);
+    } else {
+      statusDiv.innerText = "Error: " + data.error;
+      statusDiv.style.color = "#f87171";
+    }
+  } catch (err) {
+    console.error("Error al enviar nuevo correo:", err);
+    statusDiv.innerText = "Error de red al enviar.";
+    statusDiv.style.color = "#f87171";
+  }
+}
+
+function setupGeneralEmailConfigForm() {
+  const form = document.getElementById("configGeneralEmailForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const pass = document.getElementById("contactoEmailPass").value;
+    const msgDiv = document.getElementById("configEmailMsg");
+    msgDiv.style.display = "none";
+
+    try {
+      await setDoc(doc(db, "configuraciones_sistema", "email_config"), {
+        contrasena: pass,
+        fecha_actualizacion: serverTimestamp()
+      });
+
+      await logAction(
+        currentUserProfile.nombre,
+        currentUserProfile.rol,
+        "Configuración de Correo",
+        "Actualizó la contraseña del buzón general de contacto"
+      );
+
+      form.reset();
+      msgDiv.innerText = "¡Contraseña del buzón general actualizada con éxito!";
+      msgDiv.className = "success-msg";
+      msgDiv.style.display = "block";
+    } catch (err) {
+      console.error("Error al guardar configuración de correo:", err);
+      msgDiv.innerText = "Error: " + err.message;
+      msgDiv.className = "auth-error-msg";
+      msgDiv.style.display = "block";
+    }
+  });
+}

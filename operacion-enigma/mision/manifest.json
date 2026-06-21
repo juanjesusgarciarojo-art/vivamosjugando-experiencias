@@ -1,0 +1,22 @@
+{
+  "name": "Operación Enigma - Agentes de Campo",
+  "short_name": "Op. Enigma",
+  "description": "Escape room urbano interactivo y juego de espionaje en vivo de ComoIguales.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#ff2d55",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

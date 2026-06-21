@@ -2006,4 +2006,129 @@ nav.sidebar-menu li.admin-only, .sidebar-menu li.admin-only a {
     display: none; /* Ocultar subtítulo para ganar espacio */
   }
 }
+/* ============================================================
+   11. MÓDULO DE CORREO CORPORATIVO (PREMIUM STYLES)
+   ============================================================ */
 
+.email-unlock-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 200px);
+}
+
+.email-unlock-box {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  border-radius: 16px;
+  padding: 3rem 2.5rem;
+}
+
+.mailbox-tab {
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.mailbox-tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.mailbox-tab.active {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: var(--color-violet);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.25);
+}
+
+.email-item {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.email-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.email-item.active {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: var(--color-violet);
+  box-shadow: inset 3px 0 0 var(--color-violet);
+}
+
+.email-item.unread {
+  font-weight: bold;
+}
+
+.email-item.unread::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-violet);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--color-violet);
+}
+
+.email-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.email-item-sender {
+  color: #fff;
+  font-weight: 600;
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.email-item-subject {
+  font-size: 0.88rem;
+  color: #eee;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.email-item-date {
+  font-size: 0.75rem;
+}
+
+/* Modificaciones de Scrollbar */
+.email-list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.email-list-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.email-list-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+.email-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
