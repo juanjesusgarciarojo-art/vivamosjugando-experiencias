@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuadro de Control — ComoIguales</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#8b5cf6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="logo-comoiguales.png">
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="dashboard.css?v=1.0.6">
+</head>
+<body>
+
+  <!-- ============================================================
+       1. PANTALLA DE ACCESO (LOGIN & REGISTRO INICIAL)
+       ============================================================ -->
+  <div id="authScreen" class="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <img src="../logo-comoiguales.png" alt="ComoIguales">
+        <h2>ComoIguales</h2>
+        <p>Gestión de Experiencias</p>
+      </div>
+
+      <!-- Formulario Login Normal -->
+      <form id="loginForm">
+        <h3>Iniciar Sesión</h3>
+        <div class="form-group">
+          <label for="loginEmail">Email Profesional</label>
+          <input type="email" id="loginEmail" required placeholder="tuemail@comoiguales.com">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Contraseña</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-primary-glow">INGRESAR AL PANEL</button>
+      </form>
+
+      <!-- Formulario Onboarding Primer Administrador (Se muestra dinámicamente si no hay usuarios) -->
+      <form id="setupForm" style="display: none;">
+        <h3>Configurar Primer Administrador</h3>
+        <p class="setup-notice">No se detectó ningún usuario en la plataforma. Registra la primera cuenta de Administrador principal.</p>
+        <div class="form-group">
+          <label for="setupNombre">Nombre Completo</label>
+          <input type="text" id="setupNombre" required placeholder="Ej: Juan Jesús">
+        </div>
+        <div class="form-group">
+          <label for="setupEmail">Email del Administrador</label>
+          <input type="email" id="setupEmail" required placeholder="admin@comoiguales.com">
+        </div>
+        <div class="form-group">
+          <label for="setupPassword">Contraseña de Seguridad</label>
+          <input type="password" id="setupPassword" required minlength="6" placeholder="Mínimo 6 caracteres">
+        </div>
+        <button type="submit" class="btn-setup">CREAR ADMINISTRADOR</button>
+      </form>
+
+      <div id="authError" class="auth-error-msg" style="display: none;"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       2. PANEL DE CONTROL PRINCIPAL (DASHBOARD)
+       ============================================================ -->
+  <div id="dashboardScreen" class="dashboard-container" style="display: none;">
+    <!-- Overlay para cerrar el menú en móviles -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- BARRA LATERAL (SIDEBAR) -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="../logo-comoiguales.png" alt="ComoIguales">
+        <div>
+          <h3>ComoIguales</h3>
+          <span>Panel de Gestión</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-menu">
+        <ul>
+          <li>
+            <a href="#" class="nav-item active" data-target="view-inicio">
+              <span class="icon">🏠</span> Inicio
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" data-target="view-calendario">
+              <span class="icon">📅</span> Calendario
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" data-target="view-experiencias">
+              <span class="icon">🎮</span> Experiencias
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item" data-target="view-correo">
+              <span class="icon">✉️</span> Correo
+            </a>
+          </li>
+          <li class="admin-only">
+            <a href="#" class="nav-item" data-target="view-buzon">
+              <span class="icon">📥</span> Buzón
+              <span id="badgeBuzon" class="badge" style="display: none;">0</span>
+            </a>
+          </li>
+          <li class="admin-only">
+            <a href="#" class="nav-item" data-target="view-clientes">
+              <span class="icon">👥</span> Clientes
+            </a>
+          </li>
+          <li class="admin-only">
+            <a href="#" class="nav-item" data-target="view-gestores">
+              <span class="icon">🛡️</span> Equipo
+            </a>
+          </li>
+          <li class="admin-only">
+            <a href="#" class="nav-item" data-target="view-auditoria">
+              <span class="icon">📜</span> Auditoría
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Perfil y Salida -->
+      <div class="sidebar-user">
+        <div class="user-avatar">👤</div>
+        <div class="user-info">
+          <h4 id="userName">Cargando...</h4>
+          <span id="userRole">Rol</span>
+        </div>
+        <button id="logoutBtn" class="btn-logout" title="Cerrar Sesión">➔</button>
+      </div>
+    </aside>
+
+    <!-- ÁREA DE CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+      
+      <!-- HEADER DEL PANEL -->
+      <header class="content-header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <button id="sidebarToggleBtn" class="btn-sidebar-toggle" title="Contraer/Expandir menú">☰</button>
+          <div>
+            <h1 id="viewTitle">Inicio</h1>
+            <p id="viewSubtitle" class="text-muted">Resumen general y próximas tareas</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span class="current-date" id="headerDate">-- / -- / ----</span>
+        </div>
+      </header>
+
+      <!-- ==================== VISTA: INICIO ==================== -->
+      <section id="view-inicio" class="dashboard-view active">
+        <!-- Tarjetas de Estadísticas (Admin Only) -->
+        <div class="stats-grid admin-only">
+          <div class="stat-card">
+            <div class="stat-icon magenta">📥</div>
+            <div class="stat-content">
+              <span>Mensajes Nuevos</span>
+              <h3 id="statNuevos">0</h3>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">📅</div>
+            <div class="stat-content">
+              <span>Reservas este mes</span>
+              <h3 id="statReservasMes">0</h3>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon violet">👥</div>
+            <div class="stat-content">
+              <span>Total Clientes</span>
+              <h3 id="statClientes">0</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fila de Actividad Reciente / Próximas Asignaciones -->
+        <div class="dashboard-grid">
+          <!-- Calendario rápido / Próximos eventos -->
+          <div class="dashboard-panel">
+            <div class="panel-header">
+              <h3>Próximas Experiencias Programadas</h3>
+            </div>
+            <div class="panel-body">
+              <div class="table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Hora</th>
+                      <th>Experiencia</th>
+                      <th>Cliente</th>
+                      <th>Gestor</th>
+                      <th>Estado</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboardNextEvents">
+                    <tr>
+                      <td colspan="7" class="loading-cell">Cargando próximas experiencias...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumen de solicitudes urgentes (Admin Only) -->
+          <div class="dashboard-panel admin-only">
+            <div class="panel-header">
+              <h3>Solicitudes de Contacto Pendientes</h3>
+            </div>
+            <div class="panel-body" id="dashboardPendingRequests">
+              <p class="text-muted">Cargando solicitudes urgentes...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: CALENDARIO ==================== -->
+      <section id="view-calendario" class="dashboard-view">
+        <div class="calendar-controls">
+          <div class="calendar-month-selector">
+            <button id="prevMonthBtn" class="btn-icon">◀</button>
+            <h2 id="calendarMonthYear">Enero 2026</h2>
+            <button id="nextMonthBtn" class="btn-icon">▶</button>
+          </div>
+          <div class="calendar-legend">
+            <span class="legend-item"><span class="dot enigma"></span> Enigma</span>
+            <span class="legend-item"><span class="dot campamento"></span> Campamento</span>
+            <span class="legend-item"><span class="dot personalizada"></span> A medida</span>
+          </div>
+          <button id="addEventBtn" class="btn-add-event">+ Nueva Reserva</button>
+        </div>
+
+        <div class="calendar-wrapper">
+          <!-- Encabezados de días -->
+          <div class="calendar-weekdays">
+            <div>Lunes</div>
+            <div>Martes</div>
+            <div>Miércoles</div>
+            <div>Jueves</div>
+            <div>Viernes</div>
+            <div>Sábado</div>
+            <div>Domingo</div>
+          </div>
+          <!-- Rejilla de días -->
+          <div class="calendar-days" id="calendarDaysGrid">
+            <!-- Rellenado dinámicamente con JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: BUZÓN ==================== -->
+      <section id="view-buzon" class="dashboard-view admin-only">
+        <div class="mailbox-layout">
+          <!-- Listado de Correos -->
+          <div class="mailbox-list-panel">
+            <div class="mailbox-tabs">
+              <button class="mailbox-tab active" data-status="nuevo">Nuevos</button>
+              <button class="mailbox-tab" data-status="respondido">Respondidos</button>
+              <button class="mailbox-tab" data-status="archivado">Archivados</button>
+            </div>
+            <div class="mailbox-items" id="mailboxItemsList">
+              <p class="loading-text">Cargando bandeja de entrada...</p>
+            </div>
+          </div>
+
+          <!-- Vista de Detalle -->
+          <div class="mailbox-detail-panel" id="mailboxDetailPanel">
+            <div class="no-selection-state">
+              <span>📬</span>
+              <p>Selecciona una solicitud de la bandeja para ver sus detalles</p>
+            </div>
+            <div class="mail-detail-content" style="display: none;" id="mailDetailContent">
+              <!-- Rellenado dinámicamente con JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: CLIENTES ==================== -->
+      <section id="view-clientes" class="dashboard-view admin-only">
+        <div class="filter-bar">
+          <input type="text" id="clientSearch" class="search-input" placeholder="Buscar por nombre, email o teléfono...">
+          <div class="filter-actions">
+            <select id="clientFilterPromo" class="filter-select">
+              <option value="todos">Todos los clientes</option>
+              <option value="promo">Acepta Promociones</option>
+              <option value="nopromo">No Acepta Promociones</option>
+            </select>
+            <button id="copyEmailsBtn" class="btn-secondary">📋 Copiar Lista Emails</button>
+          </div>
+        </div>
+
+        <div class="table-panel">
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th>Acepta Promo</th>
+                  <th>Consultas</th>
+                  <th>Exp. Jugadas</th>
+                  <th>Notas / Campañas</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="clientsTableBody">
+                <tr>
+                  <td colspan="8" class="loading-cell">Cargando base de datos de clientes...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: EQUIPO ==================== -->
+      <section id="view-gestores" class="dashboard-view admin-only">
+        <div class="gestores-layout">
+          <!-- Lista de Gestores -->
+          <div class="gestores-list-panel">
+            <div class="panel-header">
+              <h3>Miembros del Equipo</h3>
+            </div>
+            <div class="gestores-cards-grid" id="gestoresCardsList">
+              <p class="loading-text">Cargando equipo de gestores...</p>
+            </div>
+          </div>
+
+          <!-- Añadir Gestor -->
+          <div class="gestor-add-panel">
+            <div class="panel-header">
+              <h3>Dar de Alta Gestor / Admin</h3>
+            </div>
+            <form id="addGestorForm" class="panel-body-form">
+              <div class="form-group">
+                <label for="gestorNombre">Nombre Completo</label>
+                <input type="text" id="gestorNombre" required placeholder="Ej: Carlos Gómez">
+              </div>
+              <div class="form-group">
+                <label for="gestorEmail">Email Acceso Dashboard</label>
+                <input type="email" id="gestorEmail" required placeholder="carlos@comoiguales.com">
+              </div>
+              <div class="form-group">
+                <label for="gestorTelefono">Teléfono</label>
+                <input type="tel" id="gestorTelefono" required placeholder="Ej: 600000000">
+              </div>
+              <div class="form-group">
+                <label for="gestorPassword">Contraseña Temporal Dashboard</label>
+                <input type="password" id="gestorPassword" required minlength="6" placeholder="Mínimo 6 caracteres">
+              </div>
+              <div class="form-group">
+                <label for="gestorCorreoCorp">Correo Corporativo Asignado</label>
+                <input type="email" id="gestorCorreoCorp" placeholder="Ej: carlos@vivamosjugando.com">
+              </div>
+              <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                <input type="checkbox" id="gestorAccesoContacto" style="width: auto; margin: 0;">
+                <label for="gestorAccesoContacto" style="margin: 0; cursor: pointer;">Permitir acceso a buzón general (contacto@)</label>
+              </div>
+              <div class="form-group" style="margin-top: 15px;">
+                <label for="gestorRole">Rol en la Plataforma</label>
+                <select id="gestorRole">
+                  <option value="gestor">Gestor (Acceso limitado a su agenda)</option>
+                  <option value="admin">Administrador (Acceso total)</option>
+                </select>
+              </div>
+              <button type="submit" class="btn-primary-glow">REGISTRAR EN EL SISTEMA</button>
+              <div id="addGestorMsg" class="success-msg" style="display: none;"></div>
+          </div>
+
+          <!-- Configurar Correo Genérico -->
+          <div class="gestor-add-panel" style="margin-top: 20px;">
+            <div class="panel-header">
+              <h3>Buzón de Contacto General</h3>
+            </div>
+            <form id="configGeneralEmailForm" class="panel-body-form">
+              <div class="form-group" style="margin-bottom: 15px;">
+                <label for="contactoEmailPass">Contraseña de contacto@vivamosjugando.com</label>
+                <input type="password" id="contactoEmailPass" required placeholder="Contraseña de la cuenta corporativa">
+              </div>
+              <button type="submit" class="btn-primary-glow">ACTUALIZAR CONTRASEÑA</button>
+              <div id="configEmailMsg" class="success-msg" style="display: none; margin-top: 10px;"></div>
+            </form>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: AUDITORÍA ==================== -->
+      <section id="view-auditoria" class="dashboard-view admin-only">
+        <div class="audit-timeline-panel">
+          <div class="panel-header">
+            <h3>Historial de Actividad de la Plataforma</h3>
+            <button id="clearAuditBtn" class="btn-danger" style="display:none;">Limpiar Historial</button>
+          </div>
+          <div class="audit-list" id="auditListItems">
+            <p class="loading-text">Cargando registros de auditoría...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: CORREO CORPORATIVO ==================== -->
+      <section id="view-correo" class="dashboard-view">
+        
+        <!-- PANTALLA: DESBLOQUEO DE CORREO -->
+        <div id="email-unlock-screen" class="email-unlock-container glass text-center" style="padding: 60px 20px;">
+          <div class="email-unlock-box" style="max-width: 450px; margin: 0 auto;">
+            <span class="email-unlock-icon" style="font-size: 3.5rem; display: block; margin-bottom: 20px;">✉️</span>
+            <h3 style="margin-bottom: 10px;">Bandeja de Correo Corporativo</h3>
+            <p id="email-unlock-desc" style="color: var(--text-muted); margin-bottom: 25px;">Introduce la contraseña de tu correo corporativo asignado para acceder a los mensajes.</p>
+            <div id="email-unlock-form" class="panel-body-form">
+              <div class="form-group" style="margin-bottom: 15px;">
+                <input type="password" id="email-session-password" placeholder="Contraseña de correo" required class="w-100" style="padding: 12px; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff;">
+              </div>
+              <button id="btn-unlock-email" class="btn-primary-glow w-100" style="padding: 12px; font-weight: bold;">ACCEDER A LA BANDEJA</button>
+              <div id="email-unlock-error" class="auth-error-msg" style="display: none; margin-top: 15px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANTALLA: BANDEJA DE ENTRADA (Muestra solo tras desbloquear) -->
+        <div id="email-workspace-screen" style="display: none; height: calc(100vh - 120px);" class="email-workspace-layout">
+          
+          <!-- Selector de buzones en la parte superior -->
+          <div class="email-mailbox-selector-bar glass" style="padding: 10px 15px; border-bottom: 1px solid var(--border-color); display: flex; gap: 10px;">
+            <div class="mailbox-tabs" id="mailboxTabsContainer" style="display: flex; gap: 10px; width: 100%;">
+              <!-- Se rellenará dinámicamente con las pestañas del correo personal y genérico -->
+            </div>
+          </div>
+
+          <div class="email-main-split" style="display: flex; height: calc(100% - 55px); overflow: hidden;">
+            <!-- Columna Izquierda: Lista de correos y carpetas -->
+            <div class="email-list-panel glass" style="width: 320px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; background: rgba(15,15,25,0.4);">
+              <div class="email-folder-nav" style="padding: 12px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border-color);">
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn-folder active w-50" data-folder="INBOX" style="padding: 8px 10px; font-size: 0.85rem; border-radius: 6px; border: none; background: var(--color-violet); color: #fff; cursor: pointer;">📥 Recibidos</button>
+                  <button class="btn-folder w-50" data-folder="Sent" style="padding: 8px 10px; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer;">📤 Enviados</button>
+                </div>
+                <button id="btn-compose-email" class="btn-compose" style="padding: 10px; font-weight: bold; border-radius: 6px; border: 1px dashed var(--color-violet); background: rgba(100,50,250,0.1); color: var(--color-violet); cursor: pointer; text-align: center;">+ Redactar Nuevo</button>
+              </div>
+              <div class="email-list-scroll" id="emailListScroll" style="flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Listado de correos cargado dinámicamente -->
+                <p class="loading-text" style="color: var(--text-muted); text-align: center; margin-top: 20px;">Cargando correos...</p>
+              </div>
+            </div>
+
+            <!-- Columna Derecha: Visor de correo y respuesta -->
+            <div class="email-viewer-panel glass" id="emailViewerPanel" style="flex: 1; display: flex; flex-direction: column; background: rgba(10,10,15,0.2); overflow-y: auto;">
+              <div id="email-viewer-empty" class="text-center" style="padding-top: 150px; text-align: center; width: 100%;">
+                <span style="font-size: 3.5rem; display: block; color: var(--text-muted);">📥</span>
+                <p style="color: var(--text-muted); margin-top: 15px; font-size: 1rem;">Selecciona un correo de la lista para leer su contenido.</p>
+              </div>
+              
+              <!-- Visor de contenido -->
+              <div id="email-viewer-content" style="display: none; padding: 25px; flex: 1; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;">
+                <div class="email-viewer-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                  <h3 id="email-view-subject" style="font-size: 1.4rem; color: #fff; margin-bottom: 10px;">Asunto del correo</h3>
+                  <div class="email-view-meta" style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted);">
+                    <span id="email-view-from">De: --</span>
+                    <span id="email-view-date">Fecha: --</span>
+                  </div>
+                </div>
+                <div class="email-viewer-body" id="emailViewBody" style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); min-height: 200px; color: #eee; font-size: 0.95rem; line-height: 1.6; overflow-x: auto;">
+                  <!-- Contenido del cuerpo del mensaje -->
+                </div>
+                <div class="email-viewer-reply-box" id="emailReplyBox" style="border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                  <h4 style="color: #fff; font-size: 1rem;">Responder a este correo</h4>
+                  <textarea id="email-reply-text" placeholder="Escribe aquí tu respuesta..." style="min-height: 100px; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; font-size: 0.95rem; width: 100%; box-sizing: border-box;"></textarea>
+                  <div class="reply-actions" style="display: flex; align-items: center;">
+                    <button id="btn-send-email-reply" class="btn-primary-glow" style="padding: 10px 20px; font-weight: bold; border-radius: 6px;">Enviar Respuesta</button>
+                    <div id="email-reply-status" style="margin-left: 15px; font-size: 0.9rem;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Formulario de Redacción Nuevo -->
+              <div id="email-composer-content" style="display: none; padding: 25px; flex: 1; display: flex; flex-direction: column; gap: 20px;">
+                <div class="email-viewer-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+                  <h3 style="font-size: 1.3rem; color: #fff;">Nuevo Mensaje Corporativo</h3>
+                </div>
+                <div class="email-composer-form panel-body-form" style="display: flex; flex-direction: column; gap: 15px;">
+                  <div class="form-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label for="email-to">Para:</label>
+                    <input type="email" id="email-to" placeholder="ejemplo@correo.com" required style="padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff;">
+                  </div>
+                  <div class="form-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label for="email-subject">Asunto:</label>
+                    <input type="text" id="email-subject" placeholder="Escribe el asunto aquí" required style="padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff;">
+                  </div>
+                  <div class="form-group" style="display: flex; flex-direction: column; gap: 5px;">
+                    <label for="email-body">Mensaje:</label>
+                    <textarea id="email-body" style="min-height: 220px; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; font-size: 0.95rem; width: 100%; box-sizing: border-box;" placeholder="Escribe tu mensaje..."></textarea>
+                  </div>
+                  <div class="reply-actions" style="display: flex; align-items: center; gap: 10px;">
+                    <button id="btn-send-new-email" class="btn-primary-glow" style="padding: 10px 20px; font-weight: bold; border-radius: 6px;">Enviar Correo</button>
+                    <button id="btn-cancel-compose" class="btn-secondary" style="padding: 10px 20px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer;">Cancelar</button>
+                    <div id="email-compose-status" style="margin-left: 15px; font-size: 0.9rem;"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================== VISTA: GESTOR DE EXPERIENCIAS ==================== -->
+      <section id="view-experiencias" class="dashboard-view">
+        <!-- SUBVISTA 1: SELECTOR DE EXPERIENCIAS -->
+        <div id="enigma-selector-screen" class="exp-selector-grid">
+          
+          <!-- TARJETA: OPERACIÓN ENIGMA -->
+          <div class="exp-card glass">
+            <div class="exp-card-header">
+              <span class="exp-badge active-badge">Activa</span>
+              <span class="exp-icon">🕵️‍♂️</span>
+            </div>
+            <div class="exp-card-body">
+              <h3>Operación Enigma</h3>
+              <p>Escape room interactivo exterior y juego de espionaje en vivo. Supervisa el progreso de los escuadrones, valida códigos y comunícate por el canal de emergencias en tiempo real.</p>
+              <div style="margin-top: 1rem; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.8rem; display: flex; flex-direction: column; gap: 4px;">
+                <span style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Enlace para Jugadores:</span>
+                <a href="https://www.vivamosjugando.com/operacion-enigma/mision/" target="_blank" style="color: var(--color-violet); text-decoration: none; word-break: break-all; font-family: monospace; font-weight: bold;">www.vivamosjugando.com/operacion-enigma/mision/</a>
+              </div>
+            </div>
+            <div class="exp-card-footer">
+              <button id="btn-manage-enigma" class="btn-primary-glow w-100">Gestionar Operación</button>
+            </div>
+          </div>
+
+          <!-- TARJETA: CAMPAMENTO DE VERANO (PROXIMAMENTE) -->
+          <div class="exp-card glass locked">
+            <div class="exp-card-header">
+              <span class="exp-badge locked-badge">Próximamente</span>
+              <span class="exp-icon">🏕️</span>
+            </div>
+            <div class="exp-card-body">
+              <h3>Gymkana Campamento</h3>
+              <p>Experiencia de retos cooperativos y aventura al aire libre. Próxima integración de soporte digital en tiempo real para coordinadores de campo.</p>
+            </div>
+            <div class="exp-card-footer">
+              <button class="btn-secondary w-100" style="opacity: 0.5;" disabled>Próximamente</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SUBVISTA 2: CONSOLA TÁCTICA DE OPERACIÓN ENIGMA -->
+        <div id="enigma-console-screen" style="display: none;">
+          <div class="console-back-row">
+            <button id="btn-back-to-selector" class="btn-back">◀ Volver a Experiencias</button>
+          </div>
+
+          <!-- CONTENEDOR MANDO CENTRAL -->
+          <div class="enigma-dashboard-layout">
+            
+            <!-- SECCIÓN IZQUIERDA: CONTROLES Y AGENTES -->
+            <div class="enigma-left-col">
+              
+              <!-- PANEL ESTADO Y TIEMPO (CRONÓMETRO NEÓN) -->
+              <div class="console-panel stats-card glass text-center">
+                <div class="timer-section">
+                  <div class="timer-title">⏱️ TIEMPO RESTANTE DE MISIÓN</div>
+                  <div id="enigma-mission-timer" class="neon-timer">00:00:00</div>
+                  <div id="enigma-mission-status-text" class="tactical-status">ESPERANDO CLAVE...</div>
+                  <div id="enigma-mission-start-time" class="tactical-substatus">TIEMPO: --:--:--</div>
+                </div>
+              </div>
+
+              <!-- PANEL REGISTRO DE HITOS -->
+              <div class="console-panel glass">
+                <h3 class="panel-title text-violet">📊 REGISTRO DE MISIONES</h3>
+                <div class="milestones-list">
+                  <div class="milestone-item">
+                    <span class="milestone-label">🚩 INICIO OPERACIÓN:</span>
+                    <span id="enigma-val-mision-inicio" class="milestone-val text-muted">--:--:--</span>
+                  </div>
+                  <div class="milestone-item">
+                    <span id="enigma-label-mision-1" class="milestone-label text-muted">[MISIÓN 1: ASCENSO]</span>
+                    <span id="enigma-val-mision-1" class="milestone-val text-muted">PENDIENTE</span>
+                  </div>
+                  <div class="milestone-item">
+                    <span id="enigma-label-mision-2" class="milestone-label text-muted">[MISIÓN 2: INMERSIÓN]</span>
+                    <span id="enigma-val-mision-2" class="milestone-val text-muted">BLOQUEADA</span>
+                  </div>
+                  <div class="milestone-item">
+                    <span id="enigma-label-mision-3" class="milestone-label text-muted">[MISIÓN 3: QUIMERA]</span>
+                    <span id="enigma-val-mision-3" class="milestone-val text-muted">BLOQUEADA</span>
+                  </div>
+                  <div class="milestone-item border-top-dashed">
+                    <span class="milestone-label text-danger">⚠️ FIN OPERACIÓN:</span>
+                    <span id="enigma-val-mision-final" class="milestone-val text-muted">--:--:--</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PANEL REPORTES Y AGENTES -->
+              <div class="console-panel glass">
+                <h3 class="panel-title text-blue">👥 REPORTES DE ESCUADRÓN</h3>
+                <p class="panel-desc">Administra el estado y las claves de acceso de los agentes activos.</p>
+                
+                <!-- Añadir Agente Manual -->
+                <div class="add-agent-form">
+                  <input type="text" id="enigma-new-agent-name" placeholder="Nombre (Ej. ALPHA)" class="form-input">
+                  <input type="text" id="enigma-new-agent-code" placeholder="Código (Ej. AG-05)" class="form-input">
+                  <button id="enigma-btn-add-agent" class="btn-primary-glow">+ Añadir</button>
+                </div>
+
+                <!-- Lista de Agentes -->
+                <div id="enigma-agents-list" class="agents-grid-integrated">
+                  <div class="loading-tactical">Interceptando señales de agentes...</div>
+                </div>
+              </div>
+
+              <!-- CONFIGURACIÓN DE CITA -->
+              <div class="console-panel glass">
+                <h3 class="panel-title text-warning">📅 CONFIGURACIÓN DE CITA</h3>
+                <p class="panel-desc">Ajusta los datos del punto de encuentro que verán los agentes al validarse.</p>
+                <div class="cita-form">
+                  <div class="form-group mb-2">
+                    <label for="enigma-cfg-cita-dia" class="mb-1 d-block text-muted" style="font-size:0.8rem;">Día del Encuentro</label>
+                    <input type="text" id="enigma-cfg-cita-dia" placeholder="Ej: SÁBADO 25 DE MARZO" class="form-input">
+                  </div>
+                  <div class="form-group mb-3">
+                    <label for="enigma-cfg-cita-hora" class="mb-1 d-block text-muted" style="font-size:0.8rem;">Hora del Encuentro</label>
+                    <input type="text" id="enigma-cfg-cita-hora" placeholder="Ej: 18:00 HORAS" class="form-input">
+                  </div>
+                  <button id="enigma-btn-save-cita" class="btn-warning-glow w-100">Actualizar Cita</button>
+                </div>
+              </div>
+
+              <!-- CONTROLES GENERALES -->
+              <div class="console-panel glass">
+                <h3 class="panel-title text-danger">☢️ CONTROLES DEL SISTEMA</h3>
+                <p class="panel-desc">Acciones críticas de control y reinicio para el coordinador de juego.</p>
+                <div class="system-controls-buttons">
+                  <button id="enigma-btn-toggle-pause" class="btn-warning w-100 mb-2">⏸️ Pausar Operación</button>
+                  <button id="enigma-btn-reset-messages" class="btn-danger w-100 mb-2">🧹 Barrer Enlace (Borrar Chat)</button>
+                  <button id="enigma-btn-full-reset" class="btn-danger-glow w-100">☢️ Reset Total de Misión</button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- SECCIÓN DERECHA: CHAT Y RECLUTAMIENTOS -->
+            <div class="enigma-right-col">
+              
+              <!-- CHAT DE HQ (CANAL DE EMERGENCIA) -->
+              <div class="console-panel chat-panel glass">
+                <h3 class="panel-title text-green">☎️ CANAL DE EMERGENCIA</h3>
+                <div id="enigma-chat-messages" class="chat-container-integrated">
+                  <div class="msg-sys">[ INICIALIZANDO CANAL DE ENLACE SEGURO... ]</div>
+                </div>
+                <div class="chat-input-integrated">
+                  <input type="text" id="enigma-chat-input" placeholder="Escribe directrices para los agentes..." autocomplete="off">
+                  <button id="enigma-btn-send-chat" class="btn-primary-glow">Enviar</button>
+                </div>
+              </div>
+
+              <!-- SOLICITUDES DE RECLUTAMIENTO -->
+              <div class="console-panel glass">
+                <h3 class="panel-title text-magenta">📩 SOLICITUDES DE RECLUTAMIENTO</h3>
+                <p class="panel-desc">Mensajes recibidos desde el formulario público del juego.</p>
+                <div id="enigma-contact-requests-list" class="contacts-list-integrated">
+                  <div class="loading-tactical">Esperando transmisiones...</div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============================================================
+       3. MODALES DE SISTEMA
+       ============================================================ -->
+
+  <!-- MODAL: DETALLES DE DÍA / EVENTOS -->
+  <div id="dayModal" class="modal">
+    <div class="modal-content glass">
+      <span class="modal-close" id="closeDayModalBtn">&times;</span>
+      <h2 id="dayModalTitle">Eventos el -- de -----</h2>
+      <div id="dayEventsList" class="day-events-list">
+        <!-- Lista de reservas de ese día -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR / EDITAR RESERVA -->
+  <div id="eventFormModal" class="modal">
+    <div class="modal-content glass">
+      <span class="modal-close" id="closeEventFormModalBtn">&times;</span>
+      <h2 id="eventFormModalTitle">Nueva Reserva de Experiencia</h2>
+      <form id="reservationForm">
+        <input type="hidden" id="reservaId">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="resName">Nombre del Cliente</label>
+            <input type="text" id="resName" required placeholder="Nombre del cliente">
+          </div>
+          <div class="form-group">
+            <label for="resEmail">Email del Cliente</label>
+            <input type="email" id="resEmail" required placeholder="cliente@correo.com">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="resPhone">Teléfono del Cliente</label>
+            <input type="tel" id="resPhone" required placeholder="Ej: 660512406">
+          </div>
+          <div class="form-group">
+            <label for="resExp">Experiencia Contratada</label>
+            <select id="resExp" required>
+              <option value="Operación Enigma">🕵️‍♂️ Operación Enigma</option>
+              <option value="Campamento de Verano">🏕️ Gymkana Campamento</option>
+              <option value="A Medida - Despedida">🎉 A Medida - Despedida</option>
+              <option value="A Medida - Cumpleanos">🎂 A Medida - Cumpleaños</option>
+              <option value="A Medida - Empresa">🏢 A Medida - Empresa</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="resDate">Fecha del Evento</label>
+            <input type="date" id="resDate" required>
+          </div>
+          <div class="form-group">
+            <label for="resTime">Hora del Evento</label>
+            <input type="time" id="resTime" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="resGestor">Gestor Asignado (Responsable)</label>
+          <select id="resGestor" required>
+            <option value="">Selecciona un gestor...</option>
+            <!-- Rellenado dinámicamente con la lista de usuarios_dashboard -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="resNotes">Notas Internas / Comentarios del Evento</label>
+          <textarea id="resNotes" placeholder="Detalles específicos del grupo, pista especial, personalización, etc..."></textarea>
+        </div>
+
+        <div class="form-group" id="resStatusGroup" style="display: none;">
+          <label for="resStatus">Estado del Evento</label>
+          <select id="resStatus">
+            <option value="pendiente">Pendiente</option>
+            <option value="completada">Completada</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="gestorCloseNotesGroup" style="display: none;">
+          <label for="resNotesSesion" style="color: var(--color-green);">Notas Post-Juego (Obligatorio para finalizar)</label>
+          <textarea id="resNotesSesion" placeholder="Escribe un reporte de cómo fue la sesión, cuántos asistieron, incidencias..."></textarea>
+        </div>
+
+        <div class="modal-buttons">
+          <button type="button" id="deleteReservaBtn" class="btn-danger" style="display: none;">Eliminar Reserva</button>
+          <button type="submit" id="saveReservaBtn" class="btn-primary-glow">Guardar Reserva</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR CLIENTE -->
+  <div id="editClientModal" class="modal">
+    <div class="modal-content glass">
+      <span class="modal-close" id="closeEditClientModalBtn">&times;</span>
+      <h2>Editar Datos del Cliente</h2>
+      <form id="editClientForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editClientName">Nombre Completo</label>
+            <input type="text" id="editClientName" required>
+          </div>
+          <div class="form-group">
+            <label for="editClientEmail">Email (Identificador)</label>
+            <input type="email" id="editClientEmail" disabled>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editClientPhone">Teléfono</label>
+            <input type="tel" id="editClientPhone">
+          </div>
+          <div class="form-group">
+            <label for="editClientPromo">Acepta Promociones</label>
+            <select id="editClientPromo">
+              <option value="si">SÍ</option>
+              <option value="no">NO</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+          <label for="editClientNotes">Notas de Marketing / Campañas</label>
+          <textarea id="editClientNotes" rows="3" placeholder="Añadir nota de campaña..." style="width:100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; padding: 0.5rem; box-sizing: border-box;"></textarea>
+        </div>
+
+        <div class="modal-buttons" style="margin-top: 1.5rem;">
+          <button type="submit" class="btn-primary-glow">Guardar Cambios</button>
+          <button type="button" id="cancelEditClientBtn" class="btn-secondary">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR GESTOR -->
+  <div id="editGestorModal" class="modal">
+    <div class="modal-content glass">
+      <span class="modal-close" id="closeEditGestorModalBtn">&times;</span>
+      <h2>Editar Miembro del Equipo</h2>
+      <form id="editGestorForm">
+        <input type="hidden" id="editGestorUid">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="editGestorNombre">Nombre Completo</label>
+          <input type="text" id="editGestorNombre" required style="width:100%; padding:10px; box-sizing:border-box; background: rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="editGestorEmail">Email de Acceso Dashboard</label>
+          <input type="email" id="editGestorEmail" disabled style="width:100%; padding:10px; box-sizing:border-box; opacity:0.6; background: rgba(255,255,255,0.02); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="editGestorTelefono">Teléfono</label>
+          <input type="tel" id="editGestorTelefono" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="editGestorCorreoCorp">Correo Corporativo Asignado</label>
+          <input type="email" id="editGestorCorreoCorp" placeholder="Ej: carlos@vivamosjugando.com" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+        </div>
+        <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+          <input type="checkbox" id="editGestorAccesoContacto" style="width: auto; margin: 0;">
+          <label for="editGestorAccesoContacto" style="margin: 0; cursor: pointer;">Permitir acceso a buzón general (contacto@)</label>
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+          <label for="editGestorRole">Rol en la Plataforma</label>
+          <select id="editGestorRole" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(0,0,0,0.2); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+            <option value="gestor">Gestor (Acceso limitado a su agenda)</option>
+            <option value="admin">Administrador (Acceso total)</option>
+          </select>
+        </div>
+        <div class="modal-buttons" style="margin-top: 1.5rem; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="submit" class="btn-primary-glow">Guardar Cambios</button>
+          <button type="button" id="cancelEditGestorBtn" class="btn-secondary">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts principales como Módulo -->
+  <script type="module" src="dashboard.js?v=1.0.6"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
+          .catch(err => console.error('Error al registrar Service Worker:', err));
+      });
+    }
+  </script>
+</body>
+</html>

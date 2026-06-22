@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mural de Honor - Gymkana Campamento de Verano</title>
+  
+  <!-- Google Fonts para mantener la estética -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Caveat:wght@400..700&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  
+  <div class="vignette"></div>
+
+  <div class="container">
+    <!-- Encabezado Principal -->
+    <header class="main-header">
+      <h1 class="rustic-title">Mural de Honor</h1>
+      <h2 class="rustic-subtitle">¡Grandes Expedicionarios de la Gymkana!</h2>
+    </header>
+
+    <!-- Zona de Bienvenida y Publicidad Sutil -->
+    <section class="welcome-section">
+      <div class="welcome-card">
+        <div class="welcome-image">
+          <img src="avatar-web.png" alt="Avatar del Guardián de la Web">
+        </div>
+        <div class="welcome-text">
+          <p class="speech-bubble">
+            "¡Saludos, valientes! En este gran mural podréis ver los registros y récords de los escuadrones que completaron la gymkana. Buscad vuestro grupo y descargad vuestro **Diploma de Excelencia** oficial."
+          </p>
+          <div class="branding-card">
+            <h3>Organizado por <a href="https://www.vivamosjugando.com" target="_blank">Vivamos Jugando</a></h3>
+            <p>
+              Diseñamos experiencias únicas para conectar a familias a través del juego y la aventura. 
+              En breve publicaremos nuevos talleres y emocionante actividades temáticas conjuntas para padres y niños.
+              ¡Síguenos en nuestra web para no perderte nada!
+            </p>
+            <span class="contact-mail">✉️ Contacto: <a href="mailto:contacto@vivamosjugando.com">contacto@vivamosjugando.com</a></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Buscador de Grupos -->
+    <section class="search-section">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar por nombre de escuadrón...">
+      </div>
+    </section>
+
+    <!-- Tabla de Clasificación -->
+    <section class="ranking-section">
+      <div class="parchment-card">
+        <h3 class="card-title">🏆 Tabla de Clasificación</h3>
+        <div class="table-responsive">
+          <table class="ranking-table">
+            <thead>
+              <tr>
+                <th style="width: 80px">Puesto</th>
+                <th>Escuadrón</th>
+                <th>Integrantes</th>
+                <th style="width: 140px">Tiempo Total</th>
+                <th style="width: 160px">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="rankingBody">
+              <!-- Se cargará dinámicamente con JS -->
+              <tr>
+                <td colspan="5" class="loading-cell">
+                  <div class="spinner"></div>
+                  <span>Abriendo el tomo de expedición...</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal del Diploma -->
+  <div class="modal" id="diplomaModal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeModal">&times;</span>
+      <h3 class="modal-title">📜 Diploma de Excelencia</h3>
+      <div class="diploma-frame">
+        <img id="diplomaImage" src="" alt="Diploma de Expedición">
+      </div>
+      <div class="modal-actions">
+        <a id="downloadLink" href="" download="" class="download-button">
+          📥 Descargar Diploma
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cargar Firebase SDK usando CDN -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

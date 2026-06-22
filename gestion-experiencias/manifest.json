@@ -1,0 +1,17 @@
+{
+  "name": "ComoIguales - Mando Central",
+  "short_name": "Mando Central",
+  "description": "Cuadro de mando para la gestión de experiencias y campamentos de ComoIguales.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d0e15",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon-CI.png",
+      "sizes": "192x192 512x512 1024x1024",
+      "type": "image/png"
+    }
+  ]
+}

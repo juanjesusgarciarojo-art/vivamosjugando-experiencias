@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vivamos Jugando — Escape Rooms al Aire Libre y Gymkanas</title>
+  <meta name="description" content="Descubre Vivamos Jugando. Experiencias inmersivas de escape room al aire libre y gymkanas físicas para amigos, familias y eventos personalizados. ¡El mundo es tu tablero!">
+  
+  <!-- Icono de pestaña (Usamos el logo de ComoIguales) -->
+  <link rel="icon" type="image/png" href="logo-comoiguales.png">
+
+  <!-- Estilos principales -->
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+  <!-- ── NAVBAR / CABECERA ── -->
+  <header id="main-header">
+    <div class="container">
+      <div class="header-brands" style="display: flex; align-items: center; gap: 20px;">
+        <a href="#" class="logo-wrap" style="text-decoration: none;">
+          <div class="logo-text">
+            VIVAMOS JUGANDO
+            <span class="logo-subtext">Experiencias Reales</span>
+          </div>
+        </a>
+        <a href="#" class="logo-comoiguales-wrap" style="display: flex; align-items: center; text-decoration: none;">
+          <img src="logo-comoiguales.png" alt="ComoIguales Logo" class="logo-img" style="height: 52px; width: auto;">
+        </a>
+      </div>
+
+      <!-- Menú de navegación de escritorio -->
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#concepto">El Concepto</a></li>
+        <li><a href="#experiencias">Experiencias</a></li>
+        <li><a href="#eventos">Eventos a Medida</a></li>
+        <li><a href="#regalo">Regalar</a></li>
+      </ul>
+
+      <!-- Botón hamburguesa móvil -->
+      <button class="hamburger" id="hamburger" aria-label="Abrir Menú">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── HERO SECTION ── -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-content reveal">
+        <div class="hero-tag">
+          <span class="dot"></span> NUEVAS EXPERIENCIAS EN CAMINO
+        </div>
+        <h1 class="hero-title">El mundo real es tu <span class="accent-grad">tablero de juego</span></h1>
+        <p class="hero-desc">
+          Pon a prueba tus capacidades mentales y destrezas físicas con nuestras experiencias de escape al aire libre y búsquedas del tesoro. Una aventura inmersiva perfecta para disfrutar con amigos o en familia.
+        </p>
+        <div class="hero-ctas">
+          <a href="#experiencias" class="btn-primary">Ver Experiencias</a>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal delay-1">
+        <!-- Tarjeta decorativa flotante 1 -->
+        <div class="floating-badge fb-1">
+          <div class="fb-icon">📱</div>
+          <div class="fb-text">
+            <h4>Móvil Listo</h4>
+            <p>100% Batería</p>
+          </div>
+        </div>
+
+        <!-- Imagen Visual Principal (Imagen de amigos jugando al aire libre) -->
+        <div class="visual-box">
+          <img src="hero_placeholder.jpg" alt="Amigos jugando y divirtiéndose al aire libre" class="visual-img" id="heroVisualImg">
+        </div>
+
+        <!-- Tarjeta decorativa flotante 2 -->
+        <div class="floating-badge fb-2">
+          <div class="fb-icon">🧭</div>
+          <div class="fb-text">
+            <h4>Pistas Reales</h4>
+            <p>Por la ciudad</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── EL CONCEPTO (LOGÍSTICA) ── -->
+  <section id="concepto" class="section">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-tagline">CÓMO FUNCIONA</span>
+        <h2 class="section-title">¿Qué necesitas saber sobre la experiencia?</h2>
+        <p class="section-desc">
+          Queremos que te concentres únicamente en disfrutar y superar los retos. Aquí tienes las claves de nuestras aventuras.
+        </p>
+      </div>
+
+      <div class="concept-grid">
+        <!-- Móvil Cargado -->
+        <div class="concept-card reveal" style="--card-accent: var(--color-blue)">
+          <div class="concept-card-icon">📱</div>
+          <h3>Solo un móvil cargado</h3>
+          <p>Es el único requisito tecnológico. Ven con tu smartphone con batería completa y muchas ganas de pasarlo bien.</p>
+        </div>
+
+        <!-- Duración -->
+        <div class="concept-card reveal delay-1" style="--card-accent: var(--color-coral)">
+          <div class="concept-card-icon">⏱️</div>
+          <h3>De 1 a 2 horas</h3>
+          <p>La duración de nuestras experiencias oscila entre una y dos horas. Ideal para encajar en cualquier plan de tarde o fin de semana.</p>
+        </div>
+
+        <!-- Apto para todos -->
+        <div class="concept-card reveal delay-2" style="--card-accent: var(--color-yellow)">
+          <div class="concept-card-icon">🧠</div>
+          <h3>Cuerpo y mente</h3>
+          <p>Superarás enigmas intelectuales y divertidas pruebas físicas básicas. Totalmente apto y adaptado para todos los públicos.</p>
+        </div>
+
+        <!-- Siempre guiados -->
+        <div class="concept-card reveal delay-3" style="--card-accent: var(--color-green)">
+          <div class="concept-card-icon">🤝</div>
+          <h3>Nunca estaréis solos</h3>
+          <p>A pesar de desplazaros físicamente de forma autónoma, el equipo de Vivamos Jugando os guiará en todo momento de forma remota.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── NUESTRAS EXPERIENCIAS ── -->
+  <section id="experiencias" class="section-alt">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-tagline">NUESTRAS AVENTURAS</span>
+        <h2 class="section-title">Selecciona tu experiencia</h2>
+        <p class="section-desc">
+          Contamos con retos diseñados para exprimir tu ingenio al máximo en entornos reales. ¿A cuál te vas a enfrentar?
+        </p>
+      </div>
+
+      <div class="experiences-grid">
+        <!-- Experiencia 1: Operación Enigma -->
+        <div class="experience-card reveal" style="--exp-accent: var(--color-violet)">
+          <div class="exp-img-wrap">
+            <span class="exp-tag">ESPIONAJE / TECNOLOGÍA</span>
+            <div class="exp-badge-accent">🕵️‍♂️</div>
+            <img src="./operacion-enigma/landing/classified_docs.png" alt="Operación Enigma" class="exp-img">
+          </div>
+          <div class="exp-content">
+            <h3>Operación Enigma</h3>
+            <div class="exp-info-row">
+              <span>⏱️ 1.5 - 2 Horas</span>
+              <span>👥 Amigos / Familias</span>
+            </div>
+            <p class="exp-desc">
+              Una simulación táctica de inteligencia avanzada. Introduce credenciales físicas, hackea cortafuegos y colabora en tiempo real con tu equipo de agentes secretos para resolver el caso.
+            </p>
+            <div class="exp-actions">
+              <a href="./operacion-enigma/landing/index.html" class="btn-card-primary-full">Saber Más</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Experiencia 2: Campamento de Verano -->
+        <div class="experience-card reveal delay-1" style="--exp-accent: var(--color-green)">
+          <div class="exp-img-wrap">
+            <span class="exp-tag">AVENTURA / VERANO</span>
+            <div class="exp-badge-accent">🏕️</div>
+            <img src="./campamento-verano/imagenes/fondo.png" alt="Gymkana Campamento" class="exp-img">
+          </div>
+          <div class="exp-content">
+            <h3>Gymkana de Campamento</h3>
+            <div class="exp-info-row">
+              <span>⏱️ 1 - 1.5 Horas</span>
+              <span>👦 Infantil / Familias</span>
+            </div>
+            <p class="exp-desc">
+              La gran expedición de la gymkana rural. Busca pistas ocultas, supera desafíos físicos en equipo, entra a la experiencia y consulta el gran Mural de Honor para descargar tu Diploma de Excelencia.
+            </p>
+            <div class="exp-actions">
+              <a href="./campamento-verano/index.html" class="btn-card-primary" style="flex-grow: 1; text-align: center;">Entrar a la Experiencia</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Experiencia 3: Próximamente -->
+        <div class="experience-card upcoming reveal delay-2">
+          <div class="upcoming-icon">🧪</div>
+          <h3>¿Qué estamos tramando?</h3>
+          <p>Nuestro equipo de diseño está trabajando activamente en la creación de nuevas experiencias y temáticas al aire libre. ¡Estad muy atentos!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECCIÓN MARCA COMOIGUALES (PRESENCIA DEBAJO DE EXPERIENCIAS) ── -->
+  <section class="brand-banner reveal">
+    <div class="container brand-banner-grid">
+      <div class="brand-banner-logo-wrap">
+        <img src="logo-comoiguales.png" alt="ComoIguales" class="brand-banner-logo">
+      </div>
+      <div class="brand-banner-content">
+        <span class="brand-banner-tag">DESARROLLADO POR COMOIGUALES</span>
+        <h2>Una iniciativa de <span class="accent-grad-brand">ComoIguales</span></h2>
+        <p>
+          Vivamos Jugando nace bajo el sello y respaldo de <strong>ComoIguales</strong>. Diseñamos y producimos aventuras, productos y dinámicas interactivas orientadas a conectar a las personas a través del juego, la colaboración y el aprendizaje en entornos reales.
+        </p>
+        <p style="margin-top: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+          📧 Contacto: <a href="mailto:contacto@vivamosjugando.com" style="color: var(--color-magenta); text-decoration: underline; transition: var(--transition);">contacto@vivamosjugando.com</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── EVENTOS A MEDIDA (ENCARGOS) ── -->
+  <section id="eventos" class="events-section">
+    <div class="container events-grid">
+      <div class="events-content reveal">
+        <h2>¿Quieres una experiencia personalizada?</h2>
+        <p>
+          Hacemos encargos especiales a medida. Si estás planeando un evento grupal, adaptamos nuestras gymkanas y escape rooms para que el protagonista y los invitados vivan una jornada inolvidable.
+        </p>
+        <ul class="events-list">
+          <li><span class="check-icon">✓</span> Despedidas de soltero y soltera súper originales.</li>
+          <li><span class="check-icon">✓</span> Cumpleaños y celebraciones para grupos de amigos.</li>
+          <li><span class="check-icon">✓</span> Actividades de Team Building y eventos corporativos.</li>
+          <li><span class="check-icon">✓</span> Pistas personalizadas adaptadas a vuestra historia.</li>
+        </ul>
+      </div>
+
+      <div class="events-form-box reveal delay-1">
+        <h3>Cuéntanos tu idea</h3>
+        <form id="eventsForm">
+          <div class="form-group">
+            <label for="eventNombre">Tu Nombre</label>
+            <input type="text" id="eventNombre" required placeholder="Escribe tu nombre">
+          </div>
+          <div class="form-group">
+            <label for="eventEmail">Email de contacto</label>
+            <input type="email" id="eventEmail" required placeholder="tuemail@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label for="eventTelefono">Teléfono de contacto</label>
+            <input type="tel" id="eventTelefono" required placeholder="Ej: 600123456">
+          </div>
+          <div class="form-group">
+            <label for="eventType">Tipo de Evento</label>
+            <select id="eventType">
+              <option value="Despedida">Despedida de Solter@</option>
+              <option value="Cumpleanos">Cumpleaños</option>
+              <option value="Amigos">Grupo de Amigos</option>
+              <option value="Empresa">Team Building / Empresa</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="eventMsg">Detalles de la solicitud</label>
+            <textarea id="eventMsg" required placeholder="¿Cuántos sois? ¿Qué fecha tenéis pensada? Cuéntanos un poco más..."></textarea>
+          </div>
+          <div class="form-group form-group-checkbox" style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
+            <input type="checkbox" id="eventPromo" style="width: auto; margin: 0; cursor: pointer;">
+            <label for="eventPromo" style="margin: 0; text-transform: none; font-weight: normal; cursor: pointer; color: rgba(255, 255, 255, 0.8); font-size: 0.85rem;">
+              Acepto recibir novedades y promociones de Vivamos Jugando
+            </label>
+          </div>
+          <button type="submit" class="btn-submit">ENVIAR SOLICITUD</button>
+        </form>
+
+        <div id="formSuccess" style="display: none; text-align: center; padding: 20px;">
+          <h3 style="color: var(--color-green); margin-bottom: 10px;">¡MENSAJE RECIBIDO!</h3>
+          <p style="color: rgba(255, 255, 255, 0.8);">El equipo de Vivamos Jugando se pondrá en contacto contigo muy pronto para diseñar vuestra experiencia.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECCIÓN EL REGALO PERFECTO ── -->
+  <section id="regalo" class="gift-banner">
+    <div class="container gift-banner-content reveal">
+      <div class="gift-icon">🎁</div>
+      <h2>El Regalo Perfecto</h2>
+      <p>
+        ¿Quieres sorprender a alguien especial? Regala una de nuestras experiencias. <br>
+        La diversión en equipo y la sorpresa están garantizadas en una aventura donde ellos son los auténticos protagonistas.
+      </p>
+      <a href="#eventos" class="btn-gift">Quiero Regalar Experiencia</a>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-info">
+          <h3>VIVAMOS JUGANDO</h3>
+          <p>Creamos aventuras interactivas físicas asistidas por el móvil. Conecta con los tuyos y redescubre tu entorno a través del juego.</p>
+          <div class="footer-branding">
+            <span>Una iniciativa de</span>
+            <img src="logo-comoiguales.png" alt="ComoIguales Logo">
+            <strong>ComoIguales</strong>
+          </div>
+        </div>
+
+        <div class="footer-links">
+          <h4>Navegación</h4>
+          <ul>
+            <li><a href="#concepto">El Concepto</a></li>
+            <li><a href="#experiencias">Experiencias</a></li>
+            <li><a href="#eventos">Eventos a Medida</a></li>
+            <li><a href="#regalo">Regalar</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links">
+          <h4>Experiencias</h4>
+          <ul>
+            <li><a href="./operacion-enigma/landing/index.html">Operación Enigma (Info)</a></li>
+            <li><a href="./campamento-verano/index.html">Gymkana Campamento</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links">
+          <h4>Contacto</h4>
+          <div class="footer-contact-item">📧 contacto@vivamosjugando.com</div>
+          <div class="footer-contact-item">📞 660 51 24 06</div>
+          <div class="footer-contact-item">📍 Guadalajara, España</div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2026 Vivamos Jugando. Creado en colaboración con ComoIguales. Todos los derechos reservados.</p>
+        <div class="footer-socials">
+          <a href="#" class="social-icon" aria-label="Facebook">F</a>
+          <a href="#" class="social-icon" aria-label="Instagram">I</a>
+          <a href="#" class="social-icon" aria-label="Twitter">T</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts principales -->
+  <script type="module" src="main.js"></script>
+</body>
+</html>
