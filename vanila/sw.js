@@ -1,10 +1,13 @@
-const CACHE_NAME = "comoiguales-dashboard-v1.0.7";
+const CACHE_NAME = "comoiguales-experience-vanilla-v1.0.0";
 const ASSETS = [
   "./",
   "./index.html",
-  "./dashboard.css?v=1.0.6",
-  "./dashboard.js?v=1.0.6",
-  "./icon-CI.png",
+  "./styles.css",
+  "./app.js",
+  "./mision1.html",
+  "./mision2.html",
+  "./mision3.html",
+  "./mision4.html",
   "./manifest.json"
 ];
 
@@ -32,10 +35,9 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// Estrategia: Network First con fallback a Cache para que siempre busque las últimas actualizaciones, 
-// y si está offline o falla la red cargue el App Shell desde caché.
+// Estrategia: Network First con fallback a Cache para permitir juego offline si hay mala cobertura
 self.addEventListener("fetch", (e) => {
-  // Ignorar peticiones externas de Firebase/Firestore y APIs de autenticación
+  // Ignorar peticiones externas de Firebase/Firestore
   if (
     e.request.url.includes("firebase") || 
     e.request.url.includes("firestore") || 
@@ -47,7 +49,6 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     fetch(e.request)
       .then((response) => {
-        // Si la red responde correctamente, cacheamos el archivo
         if (response.status === 200) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -57,7 +58,6 @@ self.addEventListener("fetch", (e) => {
         return response;
       })
       .catch(() => {
-        // Si no hay red, intentamos servir desde caché
         return caches.match(e.request);
       })
   );

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Misión 02 - ComoIguales</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .mission-container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 30px;
+    }
+    .back-row {
+      margin-bottom: 20px;
+    }
+    .btn-back {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: bold;
+      transition: var(--transition);
+    }
+    .btn-back:hover {
+      color: #fff;
+    }
+    .riddle-box {
+      background: rgba(255,255,255,0.02);
+      border: 1px dashed var(--border-color);
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-style: italic;
+      color: #eee;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="mission-container glass">
+    <div class="back-row">
+      <a href="index.html" class="btn-back">◀ Volver a la Consola</a>
+    </div>
+
+    <h2>Misión 02: Segunda Fase</h2>
+    <p style="margin-top: 5px;">Análisis de datos. Resuelve la secuencia lógica para continuar.</p>
+
+    <!-- Acertijo / Enigma -->
+    <div class="riddle-box text-center">
+      Completa la secuencia numérica:<br>
+      <strong>2, 4, 8, 16, 32, ...?</strong>
+    </div>
+
+    <!-- Validación de código -->
+    <div class="panel-body-form" style="margin-top: 25px;">
+      <div class="form-group">
+        <label for="mision-answer">Introduce la respuesta:</label>
+        <input type="text" id="mision-answer" placeholder="Respuesta numérica" autocomplete="off" class="text-center uppercase" style="margin-top: 8px;">
+      </div>
+      <button id="btn-verify-answer" class="btn-primary-glow w-100">VALIDAR RESPUESTA</button>
+      <div id="validation-msg" class="success-msg" style="display: none; margin-top: 15px; text-align: center;"></div>
+    </div>
+  </div>
+
+  <audio id="snd-success" src="sounds/success.mp3" preload="auto"></audio>
+  <audio id="snd-error" src="sounds/error.mp3" preload="auto"></audio>
+
+  <script>
+    document.getElementById("btn-verify-answer").addEventListener("click", () => {
+      const answer = document.getElementById("mision-answer").value.trim().toUpperCase();
+      const msg = document.getElementById("validation-msg");
+      const sndSuccess = document.getElementById("snd-success");
+      const sndError = document.getElementById("snd-error");
+
+      // Respuesta correcta de ejemplo: 64
+      if (answer === "64") {
+        sndSuccess?.play().catch(() => {});
+        msg.innerText = "✓ CÓDIGO CORRECTO. Fase 3 Desbloqueada.";
+        msg.style.color = "#10b981";
+        msg.className = "success-msg";
+        msg.style.display = "block";
+
+        localStorage.setItem("mision_2_completada", "true");
+        
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 1500);
+      } else {
+        sndError?.play().catch(() => {});
+        msg.innerText = "✘ CÓDIGO INCORRECTO. Vuelve a intentarlo.";
+        msg.style.color = "#ef4444";
+        msg.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>

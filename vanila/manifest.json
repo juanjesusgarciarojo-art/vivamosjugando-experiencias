@@ -1,0 +1,22 @@
+{
+  "name": "Experiencia Vanilla Base",
+  "short_name": "Exp Base",
+  "description": "Plantilla base para el desarrollo de nuevas experiencias PWA en ComoIguales.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0f19",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

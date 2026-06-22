@@ -315,6 +315,7 @@ function setupDashboardUI() {
   setupMailboxEvents();
   setupClientEvents();
   setupGestoresForm();
+  setupEditGestorEvents();
   setupEnigmaEvents();
   setupEmailEvents();
   setupGeneralEmailConfigForm();
@@ -1297,6 +1298,8 @@ function renderGestores() {
     return;
   }
 
+  const isAdmin = currentUserProfile && currentUserProfile.rol === 'admin';
+
   gestores.forEach(g => {
     const card = document.createElement("div");
     card.className = `gestor-card ${g.rol}`;
@@ -1309,6 +1312,12 @@ function renderGestores() {
       <div class="gestor-card-contact">📞 ${g.telefono || 'Sin teléfono'}</div>
       ${g.correo_corporativo ? `<div class="gestor-card-contact" style="margin-top: 5px; color: var(--color-violet); font-size: 0.82rem;">💼 ${g.correo_corporativo}</div>` : ''}
       <div class="gestor-card-contact" style="font-size: 0.82rem; color: #aaa;">📬 Buzón Contacto: ${g.acceso_correo_contacto ? '✅ Permitido' : '❌ Restringido'}</div>
+      ${isAdmin ? `
+      <div class="gestor-card-actions" style="margin-top: 15px; display: flex; gap: 8px; justify-content: center;">
+        <button class="btn-primary-glow" style="padding: 5px 10px; font-size: 0.8rem; border-radius: 4px;" onclick="editarGestor('${g.uid}')">✏️ Editar</button>
+        <button class="btn-danger" style="padding: 5px 10px; font-size: 0.8rem;" onclick="eliminarGestor('${g.uid}', '${g.nombre}')">🗑️ Eliminar</button>
+      </div>
+      ` : ''}
     `;
 
     cardsWrap.appendChild(card);
@@ -1375,6 +1384,115 @@ function setupGestoresForm() {
       msgDiv.style.display = "block";
     }
   });
+}
+
+function setupEditGestorEvents() {
+  const editModal = document.getElementById("editGestorModal");
+  const closeEditBtn = document.getElementById("closeEditGestorModalBtn");
+  const cancelEditBtn = document.getElementById("cancelEditGestorBtn");
+  const editForm = document.getElementById("editGestorForm");
+
+  if (closeEditBtn && editModal) {
+    closeEditBtn.addEventListener("click", () => editModal.style.display = "none");
+  }
+  if (cancelEditBtn && editModal) {
+    cancelEditBtn.addEventListener("click", () => editModal.style.display = "none");
+  }
+
+  // Cerrar haciendo clic fuera
+  window.addEventListener("click", (e) => {
+    if (e.target === editModal) {
+      editModal.style.display = "none";
+    }
+  });
+
+  if (editForm) {
+    editForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const uid = document.getElementById("editGestorUid").value;
+      const nombre = document.getElementById("editGestorNombre").value.trim();
+      const telefono = document.getElementById("editGestorTelefono").value.trim();
+      const correoCorp = document.getElementById("editGestorCorreoCorp").value.trim();
+      const accesoContacto = document.getElementById("editGestorAccesoContacto").checked;
+      const rol = document.getElementById("editGestorRole").value;
+
+      try {
+        await updateDoc(doc(db, "usuarios_dashboard", uid), {
+          nombre: nombre,
+          telefono: telefono,
+          correo_corporativo: correoCorp || "",
+          acceso_correo_contacto: accesoContacto,
+          rol: rol
+        });
+
+        await logAction(
+          currentUserProfile.nombre,
+          currentUserProfile.rol,
+          "Editar Gestor",
+          `Modificó datos del gestor: ${nombre} (${uid})`
+        );
+
+        if (currentUserProfile && uid === currentUserProfile.uid) {
+          currentUserProfile.nombre = nombre;
+          currentUserProfile.telefono = telefono;
+          currentUserProfile.correo_corporativo = correoCorp || "";
+          currentUserProfile.acceso_correo_contacto = accesoContacto;
+          currentUserProfile.rol = rol;
+          
+          document.getElementById("userName").innerText = nombre;
+          document.getElementById("userRole").innerText = rol === "admin" ? "Administrador" : "Gestor";
+        }
+
+        editModal.style.display = "none";
+        alert("Miembro del equipo actualizado correctamente.");
+      } catch (err) {
+        console.error("Error al actualizar miembro del equipo:", err);
+        alert("Error al actualizar miembro: " + err.message);
+      }
+    });
+  }
+
+  window.editarGestor = function(uid) {
+    const gestor = gestores.find(g => g.uid === uid);
+    if (!gestor) return;
+
+    document.getElementById("editGestorUid").value = gestor.uid;
+    document.getElementById("editGestorNombre").value = gestor.nombre || "";
+    document.getElementById("editGestorEmail").value = gestor.email || "";
+    document.getElementById("editGestorTelefono").value = gestor.telefono || "";
+    document.getElementById("editGestorCorreoCorp").value = gestor.correo_corporativo || "";
+    document.getElementById("editGestorAccesoContacto").checked = !!gestor.acceso_correo_contacto;
+    document.getElementById("editGestorRole").value = gestor.rol || "gestor";
+
+    if (editModal) {
+      editModal.style.display = "flex";
+    }
+  };
+
+  window.eliminarGestor = async function(uid, nombre) {
+    if (currentUserProfile && uid === currentUserProfile.uid) {
+      alert("No puedes eliminarte a ti mismo del sistema por seguridad.");
+      return;
+    }
+
+    if (confirm(`¿Estás seguro de que deseas eliminar permanentemente a ${nombre} del sistema? No podrá acceder al Dashboard y esta acción no se puede deshacer.`)) {
+      try {
+        await deleteDoc(doc(db, "usuarios_dashboard", uid));
+
+        await logAction(
+          currentUserProfile.nombre,
+          currentUserProfile.rol,
+          "Eliminar Gestor",
+          `Eliminó al miembro del equipo: ${nombre} (${uid})`
+        );
+
+        alert("Miembro del equipo eliminado correctamente.");
+      } catch (err) {
+        console.error("Error al eliminar miembro del equipo:", err);
+        alert("Error al eliminar miembro: " + err.message);
+      }
+    }
+  };
 }
 
 /* ============================================================

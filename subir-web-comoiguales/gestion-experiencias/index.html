@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="dashboard.css?v=1.0.5">
+  <link rel="stylesheet" href="dashboard.css?v=1.0.6">
 </head>
 <body>
 
@@ -831,8 +831,50 @@
     </div>
   </div>
 
+  <!-- MODAL: EDITAR GESTOR -->
+  <div id="editGestorModal" class="modal">
+    <div class="modal-content glass">
+      <span class="modal-close" id="closeEditGestorModalBtn">&times;</span>
+      <h2>Editar Miembro del Equipo</h2>
+      <form id="editGestorForm">
+        <input type="hidden" id="editGestorUid">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="editGestorNombre">Nombre Completo</label>
+          <input type="text" id="editGestorNombre" required style="width:100%; padding:10px; box-sizing:border-box; background: rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="editGestorEmail">Email de Acceso Dashboard</label>
+          <input type="email" id="editGestorEmail" disabled style="width:100%; padding:10px; box-sizing:border-box; opacity:0.6; background: rgba(255,255,255,0.02); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="editGestorTelefono">Teléfono</label>
+          <input type="tel" id="editGestorTelefono" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="editGestorCorreoCorp">Correo Corporativo Asignado</label>
+          <input type="email" id="editGestorCorreoCorp" placeholder="Ej: carlos@vivamosjugando.com" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+        </div>
+        <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+          <input type="checkbox" id="editGestorAccesoContacto" style="width: auto; margin: 0;">
+          <label for="editGestorAccesoContacto" style="margin: 0; cursor: pointer;">Permitir acceso a buzón general (contacto@)</label>
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+          <label for="editGestorRole">Rol en la Plataforma</label>
+          <select id="editGestorRole" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(0,0,0,0.2); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+            <option value="gestor">Gestor (Acceso limitado a su agenda)</option>
+            <option value="admin">Administrador (Acceso total)</option>
+          </select>
+        </div>
+        <div class="modal-buttons" style="margin-top: 1.5rem; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="submit" class="btn-primary-glow">Guardar Cambios</button>
+          <button type="button" id="cancelEditGestorBtn" class="btn-secondary">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Scripts principales como Módulo -->
-  <script type="module" src="dashboard.js?v=1.0.5"></script>
+  <script type="module" src="dashboard.js?v=1.0.6"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
