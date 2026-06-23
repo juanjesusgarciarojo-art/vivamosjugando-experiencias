@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="dashboard.css?v=1.0.8">
+  <link rel="stylesheet" href="dashboard.css?v=1.0.9">
 </head>
 <body>
 
@@ -86,8 +86,11 @@
       <nav class="sidebar-menu">
         <ul>
           <li>
-            <a href="#" class="nav-item active" data-target="view-inicio">
-              <span class="icon">🏠</span> Inicio
+            <a href="#" class="nav-item active" data-target="view-inicio" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="icon">🏠</span> Inicio
+              </div>
+              <span id="board-notification-badge" class="badge-alert" style="display: none; margin: 0;">!</span>
             </a>
           </li>
           <li>
@@ -222,6 +225,19 @@
             </div>
             <div class="panel-body" id="dashboardPendingRequests">
               <p class="text-muted">Cargando solicitudes urgentes...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLÓN DE ANUNCIOS / NOTAS IMPORTANTES -->
+        <div class="dashboard-panel" style="margin-top: 25px;">
+          <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="display: flex; align-items: center; gap: 8px;">📌 Tablón de Anuncios de la Oficina</h3>
+            <button id="addBoardNoteBtn" class="btn-primary-glow" style="padding: 6px 12px; font-size: 0.85rem;">+ Añadir Nota</button>
+          </div>
+          <div class="panel-body">
+            <div id="boardNotesContainer" class="board-notes-grid">
+              <p class="text-muted" style="grid-column: 1/-1; text-align: center; padding: 2rem;">Cargando notas del tablón...</p>
             </div>
           </div>
         </div>
@@ -708,11 +724,17 @@
         <div class="form-row">
           <div class="form-group">
             <label for="resName">Nombre del Cliente</label>
-            <input type="text" id="resName" required placeholder="Nombre del cliente">
+            <div class="suggestions-wrapper">
+              <input type="text" id="resName" required placeholder="Nombre del cliente" autocomplete="off">
+              <div id="resNameSuggestions" class="suggestions-box" style="display: none;"></div>
+            </div>
           </div>
           <div class="form-group">
             <label for="resEmail">Email del Cliente</label>
-            <input type="email" id="resEmail" required placeholder="cliente@correo.com">
+            <div class="suggestions-wrapper">
+              <input type="email" id="resEmail" required placeholder="cliente@correo.com" autocomplete="off">
+              <div id="resEmailSuggestions" class="suggestions-box" style="display: none;"></div>
+            </div>
           </div>
         </div>
 
@@ -775,6 +797,38 @@
           <button type="button" id="deleteReservaBtn" class="btn-danger" style="display: none;">Eliminar Reserva</button>
           <button type="submit" id="saveReservaBtn" class="btn-primary-glow">Guardar Reserva</button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: AÑADIR NOTA AL TABLÓN -->
+  <div id="boardNoteModal" class="modal">
+    <div class="modal-content glass" style="max-width: 400px;">
+      <span class="modal-close" id="closeBoardNoteModalBtn">&times;</span>
+      <h2>Añadir Nota al Tablón</h2>
+      <form id="boardNoteForm">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="noteContent">Mensaje / Nota</label>
+          <textarea id="noteContent" required placeholder="Escribe el aviso importante para el equipo..." style="width: 100%; height: 100px; padding: 10px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; resize: vertical;"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>Color del Post-it</label>
+          <div style="display: flex; gap: 15px; margin-top: 8px;">
+            <label style="background: #fef08a; width: 35px; height: 35px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.15);">
+              <input type="radio" name="noteColor" value="yellow" checked style="cursor: pointer; accent-color: #eab308;">
+            </label>
+            <label style="background: #fbcfe8; width: 35px; height: 35px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.15);">
+              <input type="radio" name="noteColor" value="pink" style="cursor: pointer; accent-color: #ec4899;">
+            </label>
+            <label style="background: #bbf7d0; width: 35px; height: 35px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.15);">
+              <input type="radio" name="noteColor" value="green" style="cursor: pointer; accent-color: #22c55e;">
+            </label>
+            <label style="background: #bfdbfe; width: 35px; height: 35px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.15);">
+              <input type="radio" name="noteColor" value="blue" style="cursor: pointer; accent-color: #3b82f6;">
+            </label>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary-glow w-100">Publicar Nota</button>
       </form>
     </div>
   </div>
@@ -866,7 +920,7 @@
   </div>
 
   <!-- Scripts principales como Módulo -->
-  <script type="module" src="dashboard.js?v=1.0.8"></script>
+  <script type="module" src="dashboard.js?v=1.0.9"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
