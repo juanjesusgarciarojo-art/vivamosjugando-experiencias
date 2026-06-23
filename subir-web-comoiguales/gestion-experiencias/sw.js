@@ -1,9 +1,9 @@
-const CACHE_NAME = "comoiguales-dashboard-v1.0.7";
+const CACHE_NAME = "comoiguales-dashboard-v1.0.9";
 const ASSETS = [
   "./",
   "./index.html",
-  "./dashboard.css?v=1.0.6",
-  "./dashboard.js?v=1.0.6",
+  "./dashboard.css?v=1.0.9",
+  "./dashboard.js?v=1.0.9",
   "./icon-CI.png",
   "./manifest.json"
 ];
@@ -48,7 +48,7 @@ self.addEventListener("fetch", (e) => {
     fetch(e.request)
       .then((response) => {
         // Si la red responde correctamente, cacheamos el archivo
-        if (response.status === 200) {
+        if (response.status === 200 && e.request.url.startsWith('http')) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(e.request, responseClone);

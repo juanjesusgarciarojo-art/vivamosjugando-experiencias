@@ -26,7 +26,8 @@ import {
   onSnapshot, 
   deleteDoc, 
   updateDoc,
-  serverTimestamp 
+  serverTimestamp,
+  arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // 1. Configuración de Firebase (Proyecto: el-reto-de-tu-vida)
@@ -260,6 +261,11 @@ function switchView(viewId) {
     const unlockScreen = document.getElementById("email-unlock-screen");
     const workspaceScreen = document.getElementById("email-workspace-screen");
 
+    const targetEmailEl = document.getElementById("unlock-target-email");
+    if (targetEmailEl) {
+      targetEmailEl.innerText = emailState.personalEmail || "contacto@vivamosjugando.com";
+    }
+
     if (!emailState.personalEmail && emailState.hasAccessContacto) {
       emailState.isUnlocked = true;
       emailState.currentActiveMailbox = "contacto@vivamosjugando.com";
@@ -319,6 +325,7 @@ function setupDashboardUI() {
   setupEnigmaEvents();
   setupEmailEvents();
   setupGeneralEmailConfigForm();
+  setupBoardEvents();
 }
 
 // Registrar Auditoría
@@ -449,6 +456,30 @@ function startDataListeners() {
       });
     });
   }
+
+  // 6. TABLÓN DE ANUNCIOS
+  onSnapshot(query(collection(db, "tablon_anuncios"), orderBy("fecha", "desc")), (snap) => {
+    const allNotes = [];
+    snap.forEach(doc => {
+      allNotes.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Calcular si hay notas no leídas por el usuario actual
+    let hasUnread = false;
+    allNotes.forEach(note => {
+      const readBy = note.leido_por || [];
+      if (currentUserProfile && !readBy.includes(currentUserProfile.uid)) {
+        hasUnread = true;
+      }
+    });
+
+    const badge = document.getElementById("board-notification-badge");
+    if (badge) {
+      badge.style.display = hasUnread ? "inline-block" : "none";
+    }
+
+    renderBoardNotes(allNotes);
+  });
 }
 
 // Actualizar contadores del panel de inicio
@@ -515,6 +546,9 @@ function setupCalendarEvents() {
 
   // Eliminar Reserva
   document.getElementById("deleteReservaBtn").addEventListener("click", deleteReservation);
+
+  // Inicializar Autocompletado
+  setupAutocomplete();
 }
 
 function renderCalendar() {
@@ -754,6 +788,16 @@ async function saveReservation(e) {
   if (estado === "completada" && !notas_sesion) {
     alert("Debes escribir la nota post-juego (Reporte) para poder completar la reserva.");
     return;
+  }
+
+  // Validación de solapamiento de monitor
+  if (gestor_asignado) {
+    const hasConflict = checkMonitorConflict(id, gestor_asignado, fecha, hora);
+    if (hasConflict) {
+      const gestorNombre = gestores.find(g => g.uid === gestor_asignado)?.nombre || "Asignado";
+      const confirmSave = confirm(`¡Advertencia! El monitor ${gestorNombre} ya tiene otra reserva asignada el mismo día a una hora cercana (duración estimada < 2 horas). ¿Deseas confirmar la asignación de todas formas?`);
+      if (!confirmSave) return;
+    }
   }
 
   try {
@@ -2234,6 +2278,14 @@ let emailState = {
 function setupEmailEvents() {
   const btnUnlock = document.getElementById("btn-unlock-email");
   const sessionPassInput = document.getElementById("email-session-password");
+  const togglePassBtn = document.getElementById("toggle-email-pass");
+  
+  if (togglePassBtn && sessionPassInput) {
+    togglePassBtn.addEventListener("click", () => {
+      const type = sessionPassInput.getAttribute("type") === "password" ? "text" : "password";
+      sessionPassInput.setAttribute("type", type);
+    });
+  }
   
   if (btnUnlock && sessionPassInput) {
     btnUnlock.addEventListener("click", handleEmailUnlock);
@@ -2309,13 +2361,15 @@ async function handleEmailUnlock() {
   errDiv.style.color = "var(--color-violet)";
   errDiv.style.display = "block";
 
+  const unlockEmailTarget = emailState.personalEmail || "contacto@vivamosjugando.com";
+
   try {
     const response = await fetch("mail_bridge.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "fetch_emails",
-        email: emailState.personalEmail,
+        email: unlockEmailTarget,
         password: password,
         folder: "INBOX"
       })
@@ -2323,9 +2377,13 @@ async function handleEmailUnlock() {
     
     const data = await response.json();
     if (data.success) {
-      emailState.personalPassword = password;
+      if (unlockEmailTarget === emailState.personalEmail) {
+        emailState.personalPassword = password;
+      } else {
+        emailState.contactoPassword = password;
+      }
       emailState.isUnlocked = true;
-      emailState.currentActiveMailbox = emailState.personalEmail;
+      emailState.currentActiveMailbox = unlockEmailTarget;
       errDiv.style.display = "none";
       loadEmailWorkspace();
     } else {
@@ -2372,18 +2430,40 @@ async function loadEmailWorkspace() {
     tabsContainer.appendChild(cTab);
   }
 
+  const indicator = document.getElementById("active-mailbox-indicator");
+  if (indicator) {
+    if (emailState.currentActiveMailbox === "contacto@vivamosjugando.com") {
+      indicator.innerText = "📢 BUZÓN DE CONTACTO";
+      indicator.style.color = "#f59e0b";
+    } else {
+      indicator.innerText = "💼 CORREO PERSONAL";
+      indicator.style.color = "var(--color-violet)";
+    }
+  }
+
   refreshEmailList();
 }
 
 function switchMailbox(mailboxName) {
   emailState.currentActiveMailbox = mailboxName;
   document.querySelectorAll(".mailbox-tab").forEach(tab => {
-    if (tab.innerText.includes(mailboxName === "contacto@vivamosjugando.com" ? "Buzón" : "Mi Correo")) {
+    if (tab.innerText.includes(mailboxName === "contacto@vivamosjugando.com" ? "Soporte" : "Mi Correo")) {
       tab.classList.add("active");
     } else {
       tab.classList.remove("active");
     }
   });
+
+  const indicator = document.getElementById("active-mailbox-indicator");
+  if (indicator) {
+    if (mailboxName === "contacto@vivamosjugando.com") {
+      indicator.innerText = "📢 BUZÓN DE CONTACTO";
+      indicator.style.color = "#f59e0b";
+    } else {
+      indicator.innerText = "💼 CORREO PERSONAL";
+      indicator.style.color = "var(--color-violet)";
+    }
+  }
 
   // Reset folder to INBOX
   emailState.currentActiveFolder = "INBOX";
@@ -2418,22 +2498,13 @@ async function refreshEmailList() {
   if (currentMailbox === emailState.personalEmail) {
     currentPassword = emailState.personalPassword;
   } else {
-    // Cuenta genérica: Cargar de base de datos
     if (!emailState.contactoPassword) {
-      try {
-        const docRef = doc(db, "configuraciones_sistema", "email_config");
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          emailState.contactoPassword = docSnap.data().contrasena;
-        } else {
-          listContainer.innerHTML = '<p class="loading-text" style="color: #f87171;">El buzón general no ha sido configurado en el Dashboard.</p>';
-          return;
-        }
-      } catch (err) {
-        console.error("Error al obtener contraseña de contacto:", err);
-        listContainer.innerHTML = '<p class="loading-text" style="color: #f87171;">Error al acceder al buzón general.</p>';
+      const p = prompt(`Introduce la contraseña para el buzón ${currentMailbox}:`);
+      if (!p) {
+        listContainer.innerHTML = '<p class="loading-text" style="color: #f87171;">Contraseña requerida para acceder al buzón general.</p>';
         return;
       }
+      emailState.contactoPassword = p;
     }
     currentPassword = emailState.contactoPassword;
   }
@@ -2719,5 +2790,225 @@ function setupGeneralEmailConfigForm() {
       msgDiv.className = "auth-error-msg";
       msgDiv.style.display = "block";
     }
+  });
+}
+
+// ============================================================
+// 10. TABLÓN DE ANUNCIOS Y AUTOCOMPLETADO
+// ============================================================
+
+function renderBoardNotes(notes) {
+  const container = document.getElementById("boardNotesContainer");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (notes.length === 0) {
+    container.innerHTML = `
+      <p class="text-muted" style="grid-column: 1/-1; text-align: center; padding: 2rem;">No hay notas publicadas en el tablón.</p>
+    `;
+    return;
+  }
+
+  notes.forEach(note => {
+    const card = document.createElement("div");
+    const color = note.color || "yellow";
+    card.className = `post-it-note ${color}`;
+
+    const readBy = note.leido_por || [];
+    const isNew = currentUserProfile ? !readBy.includes(currentUserProfile.uid) : false;
+    const date = note.fecha ? new Date(note.fecha.seconds * 1000).toLocaleString() : "Cargando...";
+
+    let actionsHtml = "";
+    if (isNew) {
+      actionsHtml += `<button class="btn-post-it-action btn-post-it-read" onclick="window.markNoteAsRead('${note.id}')">Marcar leída</button>`;
+    }
+
+    if (currentUserProfile && (note.autor_uid === currentUserProfile.uid || currentUserProfile.rol === "admin")) {
+      actionsHtml += `<button class="btn-post-it-action btn-post-it-delete" onclick="window.deleteBoardNote('${note.id}')" title="Eliminar nota">🗑️</button>`;
+    }
+
+    card.innerHTML = `
+      ${isNew ? `<span class="post-it-new-badge">NUEVA</span>` : ""}
+      <div class="post-it-body">
+        ${note.contenido.replace(/\n/g, "<br>")}
+      </div>
+      <div class="post-it-footer">
+        <span class="post-it-author">Por: ${note.autor_nombre} (${note.autor_rol === "admin" ? "Admin" : "Gestor"})</span>
+        <span>${date}</span>
+      </div>
+      <div class="post-it-actions">
+        ${actionsHtml}
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function setupBoardEvents() {
+  const addBtn = document.getElementById("addBoardNoteBtn");
+  const modal = document.getElementById("boardNoteModal");
+  const closeBtn = document.getElementById("closeBoardNoteModalBtn");
+  const form = document.getElementById("boardNoteForm");
+
+  if (addBtn && modal && closeBtn) {
+    addBtn.addEventListener("click", () => {
+      form.reset();
+      modal.style.display = "flex";
+    });
+
+    closeBtn.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    // Cerrar clicando fuera
+    window.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+      }
+    });
+  }
+
+  if (form) {
+    form.addEventListener("submit", saveBoardNote);
+  }
+}
+
+async function saveBoardNote(e) {
+  e.preventDefault();
+  const content = document.getElementById("noteContent").value.trim();
+  const colorVal = document.querySelector('input[name="noteColor"]:checked').value;
+
+  if (!content) return;
+
+  try {
+    const payload = {
+      contenido: content,
+      color: colorVal,
+      autor_nombre: currentUserProfile.nombre,
+      autor_rol: currentUserProfile.rol,
+      autor_uid: currentUserProfile.uid,
+      fecha: serverTimestamp(),
+      leido_por: [currentUserProfile.uid]
+    };
+
+    await addDoc(collection(db, "tablon_anuncios"), payload);
+
+    await logAction(
+      currentUserProfile.nombre,
+      currentUserProfile.rol,
+      "Tablón - Creado",
+      `Añadió una nota en el tablón (Color: ${colorVal})`
+    );
+
+    document.getElementById("boardNoteModal").style.display = "none";
+  } catch (err) {
+    console.error("Error al guardar nota del tablón:", err);
+    alert("Error al publicar la nota: " + err.message);
+  }
+}
+
+window.markNoteAsRead = async function(noteId) {
+  if (!currentUserProfile) return;
+  try {
+    await updateDoc(doc(db, "tablon_anuncios", noteId), {
+      leido_por: arrayUnion(currentUserProfile.uid)
+    });
+  } catch (err) {
+    console.error("Error al marcar nota como leída:", err);
+  }
+};
+
+window.deleteBoardNote = async function(noteId) {
+  if (confirm("¿Estás seguro de que deseas eliminar esta nota del tablón?")) {
+    try {
+      await deleteDoc(doc(db, "tablon_anuncios", noteId));
+      await logAction(
+        currentUserProfile.nombre,
+        currentUserProfile.rol,
+        "Tablón - Eliminado",
+        `Borró la nota ID ${noteId}`
+      );
+    } catch (err) {
+      console.error("Error al borrar nota del tablón:", err);
+      alert("Error al borrar: " + err.message);
+    }
+  }
+};
+
+function setupAutocomplete() {
+  const emailInput = document.getElementById("resEmail");
+  const nameInput = document.getElementById("resName");
+  const phoneInput = document.getElementById("resPhone");
+  const emailSuggestions = document.getElementById("resEmailSuggestions");
+  const nameSuggestions = document.getElementById("resNameSuggestions");
+
+  if (!emailInput || !nameInput || !emailSuggestions || !nameSuggestions) return;
+
+  const handleInput = (input, suggestionsBox, field) => {
+    const val = input.value.trim().toLowerCase();
+    suggestionsBox.innerHTML = "";
+    if (val.length < 2) {
+      suggestionsBox.style.display = "none";
+      return;
+    }
+
+    const matches = clients.filter(c => {
+      const matchVal = (c[field] || "").toLowerCase();
+      return matchVal.includes(val);
+    }).slice(0, 5);
+
+    if (matches.length === 0) {
+      suggestionsBox.style.display = "none";
+      return;
+    }
+
+    matches.forEach(c => {
+      const div = document.createElement("div");
+      div.className = "suggestion-item";
+      div.innerText = `${c.nombre} (${c.email})`;
+      div.addEventListener("click", () => {
+        nameInput.value = c.nombre;
+        emailInput.value = c.email;
+        phoneInput.value = c.telefono || "";
+        suggestionsBox.style.display = "none";
+      });
+      suggestionsBox.appendChild(div);
+    });
+
+    suggestionsBox.style.display = "block";
+  };
+
+  emailInput.addEventListener("input", () => handleInput(emailInput, emailSuggestions, "email"));
+  nameInput.addEventListener("input", () => handleInput(nameInput, nameSuggestions, "nombre"));
+
+  document.addEventListener("click", (e) => {
+    if (e.target !== emailInput) emailSuggestions.style.display = "none";
+    if (e.target !== nameInput) nameSuggestions.style.display = "none";
+  });
+}
+
+function checkMonitorConflict(excludeResId, gestorId, fecha, horaStr) {
+  const dayReservations = reservations.filter(res => 
+    res.id !== excludeResId && 
+    res.gestor_asignado === gestorId && 
+    res.fecha === fecha &&
+    res.estado !== "cancelada"
+  );
+
+  if (dayReservations.length === 0) return false;
+
+  const getMinutes = (hStr) => {
+    const parts = hStr.split(":");
+    return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+  };
+
+  const newTime = getMinutes(horaStr);
+
+  return dayReservations.some(res => {
+    if (!res.hora) return false;
+    const resTime = getMinutes(res.hora);
+    return Math.abs(newTime - resTime) < 120;
   });
 }

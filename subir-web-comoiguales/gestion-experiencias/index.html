@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="dashboard.css?v=1.0.6">
+  <link rel="stylesheet" href="dashboard.css?v=1.0.9">
 </head>
 <body>
 
@@ -86,8 +86,11 @@
       <nav class="sidebar-menu">
         <ul>
           <li>
-            <a href="#" class="nav-item active" data-target="view-inicio">
-              <span class="icon">🏠</span> Inicio
+            <a href="#" class="nav-item active" data-target="view-inicio" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="icon">🏠</span> Inicio
+              </div>
+              <span id="board-notification-badge" class="badge-alert" style="display: none; margin: 0;">!</span>
             </a>
           </li>
           <li>
@@ -137,6 +140,9 @@
           <span id="userRole">Rol</span>
         </div>
         <button id="logoutBtn" class="btn-logout" title="Cerrar Sesión">➔</button>
+      </div>
+      <div class="sidebar-version" style="padding: 8px 15px; font-size: 0.72rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.05); text-align: center; opacity: 0.65;">
+        Mando Central v1.0.9
       </div>
     </aside>
 
@@ -222,6 +228,19 @@
             </div>
             <div class="panel-body" id="dashboardPendingRequests">
               <p class="text-muted">Cargando solicitudes urgentes...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLÓN DE ANUNCIOS / NOTAS IMPORTANTES -->
+        <div class="dashboard-panel" style="margin-top: 25px;">
+          <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="display: flex; align-items: center; gap: 8px;">📌 Tablón de Anuncios de la Oficina</h3>
+            <button id="addBoardNoteBtn" class="btn-primary-glow" style="padding: 6px 12px; font-size: 0.85rem;">+ Añadir Nota</button>
+          </div>
+          <div class="panel-body">
+            <div id="boardNotesContainer" class="board-notes-grid">
+              <p class="text-muted" style="grid-column: 1/-1; text-align: center; padding: 2rem;">Cargando notas del tablón...</p>
             </div>
           </div>
         </div>
@@ -380,22 +399,10 @@
               </div>
               <button type="submit" class="btn-primary-glow">REGISTRAR EN EL SISTEMA</button>
               <div id="addGestorMsg" class="success-msg" style="display: none;"></div>
-          </div>
-
-          <!-- Configurar Correo Genérico -->
-          <div class="gestor-add-panel" style="margin-top: 20px;">
-            <div class="panel-header">
-              <h3>Buzón de Contacto General</h3>
-            </div>
-            <form id="configGeneralEmailForm" class="panel-body-form">
-              <div class="form-group" style="margin-bottom: 15px;">
-                <label for="contactoEmailPass">Contraseña de contacto@vivamosjugando.com</label>
-                <input type="password" id="contactoEmailPass" required placeholder="Contraseña de la cuenta corporativa">
-              </div>
-              <button type="submit" class="btn-primary-glow">ACTUALIZAR CONTRASEÑA</button>
-              <div id="configEmailMsg" class="success-msg" style="display: none; margin-top: 10px;"></div>
             </form>
           </div>
+
+
 
         </div>
       </section>
@@ -421,10 +428,11 @@
           <div class="email-unlock-box" style="max-width: 450px; margin: 0 auto;">
             <span class="email-unlock-icon" style="font-size: 3.5rem; display: block; margin-bottom: 20px;">✉️</span>
             <h3 style="margin-bottom: 10px;">Bandeja de Correo Corporativo</h3>
-            <p id="email-unlock-desc" style="color: var(--text-muted); margin-bottom: 25px;">Introduce la contraseña de tu correo corporativo asignado para acceder a los mensajes.</p>
+            <p id="email-unlock-desc" style="color: var(--text-muted); margin-bottom: 25px;">Introduce la contraseña para: <strong id="unlock-target-email" style="color: #fff;">...</strong></p>
             <div id="email-unlock-form" class="panel-body-form">
-              <div class="form-group" style="margin-bottom: 15px;">
-                <input type="password" id="email-session-password" placeholder="Contraseña de correo" required class="w-100" style="padding: 12px; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff;">
+              <div class="form-group" style="margin-bottom: 15px; position: relative;">
+                <input type="password" id="email-session-password" placeholder="Contraseña de correo" required class="w-100" style="padding: 12px; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; padding-right: 40px;">
+                <button type="button" id="toggle-email-pass" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem;">👁️</button>
               </div>
               <button id="btn-unlock-email" class="btn-primary-glow w-100" style="padding: 12px; font-weight: bold;">ACCEDER A LA BANDEJA</button>
               <div id="email-unlock-error" class="auth-error-msg" style="display: none; margin-top: 15px;"></div>
@@ -433,7 +441,7 @@
         </div>
 
         <!-- PANTALLA: BANDEJA DE ENTRADA (Muestra solo tras desbloquear) -->
-        <div id="email-workspace-screen" style="display: none; height: calc(100vh - 120px);" class="email-workspace-layout">
+        <div id="email-workspace-screen" style="display: none; flex-direction: column; height: calc(100vh - 120px);" class="email-workspace-layout">
           
           <!-- Selector de buzones en la parte superior -->
           <div class="email-mailbox-selector-bar glass" style="padding: 10px 15px; border-bottom: 1px solid var(--border-color); display: flex; gap: 10px;">
@@ -446,6 +454,9 @@
             <!-- Columna Izquierda: Lista de correos y carpetas -->
             <div class="email-list-panel glass" style="width: 320px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; background: rgba(15,15,25,0.4);">
               <div class="email-folder-nav" style="padding: 12px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border-color);">
+                <div id="active-mailbox-indicator" style="font-size: 0.8rem; font-weight: bold; color: var(--color-violet); text-transform: uppercase; margin-bottom: 5px; text-align: center; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px;">
+                  -- BANDEJA --
+                </div>
                 <div style="display: flex; gap: 8px;">
                   <button class="btn-folder active w-50" data-folder="INBOX" style="padding: 8px 10px; font-size: 0.85rem; border-radius: 6px; border: none; background: var(--color-violet); color: #fff; cursor: pointer;">📥 Recibidos</button>
                   <button class="btn-folder w-50" data-folder="Sent" style="padding: 8px 10px; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer;">📤 Enviados</button>
@@ -716,11 +727,17 @@
         <div class="form-row">
           <div class="form-group">
             <label for="resName">Nombre del Cliente</label>
-            <input type="text" id="resName" required placeholder="Nombre del cliente">
+            <div class="suggestions-wrapper">
+              <input type="text" id="resName" required placeholder="Nombre del cliente" autocomplete="off">
+              <div id="resNameSuggestions" class="suggestions-box" style="display: none;"></div>
+            </div>
           </div>
           <div class="form-group">
             <label for="resEmail">Email del Cliente</label>
-            <input type="email" id="resEmail" required placeholder="cliente@correo.com">
+            <div class="suggestions-wrapper">
+              <input type="email" id="resEmail" required placeholder="cliente@correo.com" autocomplete="off">
+              <div id="resEmailSuggestions" class="suggestions-box" style="display: none;"></div>
+            </div>
           </div>
         </div>
 
@@ -783,6 +800,38 @@
           <button type="button" id="deleteReservaBtn" class="btn-danger" style="display: none;">Eliminar Reserva</button>
           <button type="submit" id="saveReservaBtn" class="btn-primary-glow">Guardar Reserva</button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: AÑADIR NOTA AL TABLÓN -->
+  <div id="boardNoteModal" class="modal">
+    <div class="modal-content glass" style="max-width: 400px;">
+      <span class="modal-close" id="closeBoardNoteModalBtn">&times;</span>
+      <h2>Añadir Nota al Tablón</h2>
+      <form id="boardNoteForm">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="noteContent">Mensaje / Nota</label>
+          <textarea id="noteContent" required placeholder="Escribe el aviso importante para el equipo..." style="width: 100%; height: 100px; padding: 10px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; resize: vertical;"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>Color del Post-it</label>
+          <div style="display: flex; gap: 15px; margin-top: 8px;">
+            <label style="background: #fef08a; width: 35px; height: 35px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.15);">
+              <input type="radio" name="noteColor" value="yellow" checked style="cursor: pointer; accent-color: #eab308;">
+            </label>
+            <label style="background: #fbcfe8; width: 35px; height: 35px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.15);">
+              <input type="radio" name="noteColor" value="pink" style="cursor: pointer; accent-color: #ec4899;">
+            </label>
+            <label style="background: #bbf7d0; width: 35px; height: 35px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.15);">
+              <input type="radio" name="noteColor" value="green" style="cursor: pointer; accent-color: #22c55e;">
+            </label>
+            <label style="background: #bfdbfe; width: 35px; height: 35px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.15);">
+              <input type="radio" name="noteColor" value="blue" style="cursor: pointer; accent-color: #3b82f6;">
+            </label>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary-glow w-100">Publicar Nota</button>
       </form>
     </div>
   </div>
@@ -874,7 +923,7 @@
   </div>
 
   <!-- Scripts principales como Módulo -->
-  <script type="module" src="dashboard.js?v=1.0.6"></script>
+  <script type="module" src="dashboard.js?v=1.0.9"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

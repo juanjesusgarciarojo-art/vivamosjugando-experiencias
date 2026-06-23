@@ -2132,3 +2132,183 @@ nav.sidebar-menu li.admin-only, .sidebar-menu li.admin-only a {
 .email-list-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.15);
 }
+
+/* ==================== ESTILOS: TABLÓN DE ANUNCIOS ==================== */
+.board-notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.post-it-note {
+  padding: 20px;
+  border-radius: 4px;
+  color: #1f2937; /* Texto oscuro para contraste */
+  position: relative;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 160px;
+  transform: rotate(-1.5deg);
+  transition: transform 0.2s, box-shadow 0.2s;
+  font-family: 'Outfit', sans-serif;
+}
+
+.post-it-note:nth-child(even) {
+  transform: rotate(1.5deg);
+}
+
+.post-it-note:nth-child(3n) {
+  transform: rotate(-0.8deg);
+}
+
+.post-it-note:hover {
+  transform: scale(1.04) rotate(0deg);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+  z-index: 10;
+}
+
+/* Colores de Post-it */
+.post-it-note.yellow { background: #fef08a; border-left: 5px solid #eab308; }
+.post-it-note.pink { background: #fbcfe8; border-left: 5px solid #ec4899; }
+.post-it-note.green { background: #bbf7d0; border-left: 5px solid #22c55e; }
+.post-it-note.blue { background: #bfdbfe; border-left: 5px solid #3b82f6; }
+
+.post-it-body {
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.post-it-footer {
+  font-size: 0.72rem;
+  margin-top: 15px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.15);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #4b5563;
+}
+
+.post-it-author {
+  font-weight: 700;
+}
+
+.post-it-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.btn-post-it-action {
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: opacity 0.2s;
+}
+
+.btn-post-it-action:hover {
+  opacity: 0.8;
+}
+
+.btn-post-it-read {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1f2937;
+}
+
+.btn-post-it-delete {
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
+  margin-left: auto;
+}
+
+/* Badge de nuevo post-it */
+.post-it-new-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #f43f5e;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  animation: pulse 1.5s infinite;
+}
+
+/* ==================== ESTILOS: AUTOCOMPLETADO ==================== */
+.suggestions-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.suggestions-box {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #1e1e2e;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  max-height: 150px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.suggestion-item {
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: var(--color-violet);
+  color: #fff;
+}
+
+/* Badge Alerta Menú Lateral */
+.badge-alert {
+  background: #ef4444;
+  color: #fff;
+  border-radius: 50%;
+  padding: 1px 6px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  margin-left: 8px;
+  animation: pulse 1.5s infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
