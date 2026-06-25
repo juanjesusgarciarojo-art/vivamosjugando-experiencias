@@ -2312,3 +2312,72 @@ nav.sidebar-menu li.admin-only, .sidebar-menu li.admin-only a {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }
+
+/* ============================================================
+   10. OPTIMIZACIÓN RESPONSIVA DE CORREO EN MÓVILES
+   ============================================================ */
+@media (max-width: 768px) {
+  .email-workspace-layout {
+    height: auto !important;
+    min-height: calc(100vh - 120px) !important;
+  }
+  
+  .email-main-split {
+    flex-direction: column !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  
+  .email-list-panel {
+    width: 100% !important;
+    border-right: none !important;
+    display: flex !important;
+  }
+  
+  .email-viewer-panel {
+    width: 100% !important;
+    display: none !important; /* Ocultar visor por defecto en móvil */
+  }
+
+  /* Cuando se activa el visor en móviles */
+  .email-main-split.show-viewer .email-list-panel {
+    display: none !important;
+  }
+  
+  .email-main-split.show-viewer .email-viewer-panel {
+    display: flex !important;
+    flex: 1 !important;
+    min-height: 450px;
+  }
+
+  /* Botón volver (móvil) */
+  .email-mobile-back-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+    background: rgba(139, 92, 246, 0.15) !important;
+    border: 1px dashed var(--color-violet) !important;
+    color: var(--color-violet) !important;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 15px;
+    width: fit-content;
+    transition: var(--transition);
+  }
+  
+  .email-mobile-back-btn:hover {
+    background: var(--color-violet) !important;
+    color: #fff !important;
+  }
+}
+
+/* En escritorio ocultamos el botón de volver */
+@media (min-width: 769px) {
+  .email-mobile-back-btn {
+    display: none !important;
+  }
+}
+

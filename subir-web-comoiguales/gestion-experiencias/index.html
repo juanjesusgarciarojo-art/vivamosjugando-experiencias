@@ -384,7 +384,11 @@
               </div>
               <div class="form-group">
                 <label for="gestorCorreoCorp">Correo Corporativo Asignado</label>
-                <input type="email" id="gestorCorreoCorp" placeholder="Ej: carlos@vivamosjugando.com">
+                <select id="gestorCorreoCorp" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(0,0,0,0.2); color:#fff; border: 1px solid var(--border-color); border-radius:6px; font-family: inherit;">
+                  <option value="">Sin Correo Asignado</option>
+                  <option value="vivamosjugando@vivamosjugando.com">vivamosjugando@vivamosjugando.com</option>
+                  <option value="contacto@vivamosjugando.com">contacto@vivamosjugando.com</option>
+                </select>
               </div>
               <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
                 <input type="checkbox" id="gestorAccesoContacto" style="width: auto; margin: 0;">
@@ -478,6 +482,7 @@
               
               <!-- Visor de contenido -->
               <div id="email-viewer-content" style="display: none; padding: 25px; flex: 1; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;">
+                <button class="email-mobile-back-btn">⬅️ Volver a la lista</button>
                 <div class="email-viewer-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
                   <h3 id="email-view-subject" style="font-size: 1.4rem; color: #fff; margin-bottom: 10px;">Asunto del correo</h3>
                   <div class="email-view-meta" style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted);">
@@ -500,6 +505,7 @@
 
               <!-- Formulario de Redacción Nuevo -->
               <div id="email-composer-content" style="display: none; padding: 25px; flex: 1; display: flex; flex-direction: column; gap: 20px;">
+                <button class="email-mobile-back-btn">⬅️ Volver a la lista</button>
                 <div class="email-viewer-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
                   <h3 style="font-size: 1.3rem; color: #fff;">Nuevo Mensaje Corporativo</h3>
                 </div>
@@ -901,7 +907,11 @@
         </div>
         <div class="form-group" style="margin-bottom: 15px;">
           <label for="editGestorCorreoCorp">Correo Corporativo Asignado</label>
-          <input type="email" id="editGestorCorreoCorp" placeholder="Ej: carlos@vivamosjugando.com" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+          <select id="editGestorCorreoCorp" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(0,0,0,0.2); color:#fff; border: 1px solid var(--border-color); border-radius:6px; font-family: inherit;">
+            <option value="">Sin Correo Asignado</option>
+            <option value="vivamosjugando@vivamosjugando.com">vivamosjugando@vivamosjugando.com</option>
+            <option value="contacto@vivamosjugando.com">contacto@vivamosjugando.com</option>
+          </select>
         </div>
         <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
           <input type="checkbox" id="editGestorAccesoContacto" style="width: auto; margin: 0;">
