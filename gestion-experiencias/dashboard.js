@@ -9,7 +9,11 @@ import {
   signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged, 
-  createUserWithEmailAndPassword 
+  createUserWithEmailAndPassword,
+  updatePassword,
+  sendPasswordResetEmail,
+  EmailAuthProvider,
+  reauthenticateWithCredential
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
   getFirestore, 
@@ -82,6 +86,30 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleLoginPassBtn.addEventListener("click", () => {
       const type = loginPassInput.getAttribute("type") === "password" ? "text" : "password";
       loginPassInput.setAttribute("type", type);
+    });
+  }
+
+  // Recuperar Contraseña (Olvidaste tu contraseña)
+  const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+  if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const emailInput = document.getElementById("loginEmail");
+      const email = emailInput ? emailInput.value.trim() : "";
+      if (!email) {
+        alert("Por favor, introduce tu email profesional en el campo anterior para enviarte el enlace de restablecimiento.");
+        emailInput.focus();
+        return;
+      }
+      if (confirm(`¿Deseas recibir un correo electrónico en ${email} para restablecer tu contraseña?`)) {
+        try {
+          await sendPasswordResetEmail(auth, email);
+          alert(`¡Correo enviado! Hemos enviado un enlace para restablecer tu contraseña a: ${email}. Comprueba tu bandeja de entrada o carpeta de correo no deseado.`);
+        } catch (err) {
+          console.error("Error al enviar email de restablecimiento:", err);
+          alert("Error al enviar el correo: " + err.message);
+        }
+      }
     });
   }
 
@@ -348,6 +376,7 @@ function setupDashboardUI() {
   setupEmailEvents();
   setupGeneralEmailConfigForm();
   setupBoardEvents();
+  setupChangePasswordEvents();
 }
 
 // Registrar Auditoría
@@ -1518,6 +1547,38 @@ function setupEditGestorEvents() {
     });
   }
 
+  // Enviar correo de restablecimiento de contraseña a otro usuario
+  const sendResetEmailBtn = document.getElementById("sendResetEmailBtn");
+  if (sendResetEmailBtn) {
+    sendResetEmailBtn.addEventListener("click", async () => {
+      const email = document.getElementById("editGestorEmail").value.trim();
+      const nombre = document.getElementById("editGestorNombre").value.trim();
+      if (!email) {
+        alert("No se pudo obtener el email del gestor.");
+        return;
+      }
+
+      if (confirm(`¿Estás seguro de que deseas enviar un correo de restablecimiento de contraseña a ${nombre} (${email})?`)) {
+        try {
+          await sendPasswordResetEmail(auth, email);
+          
+          // Guardar en la auditoría
+          await logAction(
+            currentUserProfile.nombre,
+            currentUserProfile.rol,
+            "Seguridad",
+            `Envió correo de restablecimiento de contraseña a ${nombre} (${email})`
+          );
+
+          alert(`Se ha enviado con éxito el correo de restablecimiento de contraseña a ${email}.`);
+        } catch (err) {
+          console.error("Error al enviar email de restablecimiento:", err);
+          alert("Error al enviar el correo: " + err.message);
+        }
+      }
+    });
+  }
+
   window.editarGestor = function(uid) {
     const gestor = gestores.find(g => g.uid === uid);
     if (!gestor) return;
@@ -1559,6 +1620,101 @@ function setupEditGestorEvents() {
       }
     }
   };
+}
+
+function setupChangePasswordEvents() {
+  const modal = document.getElementById("changePasswordModal");
+  const openBtn = document.getElementById("changePasswordBtn");
+  const closeBtn = document.getElementById("closeChangePasswordModalBtn");
+  const cancelBtn = document.getElementById("cancelChangePasswordBtn");
+  const form = document.getElementById("changePasswordForm");
+  const msgDiv = document.getElementById("chgPasswordMsg");
+
+  if (!modal) return;
+
+  const closeModal = () => {
+    modal.style.display = "none";
+    if (form) form.reset();
+    if (msgDiv) msgDiv.style.display = "none";
+  };
+
+  if (openBtn) {
+    openBtn.addEventListener("click", () => {
+      modal.style.display = "flex";
+    });
+  }
+
+  if (closeBtn) closeBtn.addEventListener("click", closeModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+
+  window.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msgDiv.style.display = "none";
+      msgDiv.className = "";
+
+      const currentPass = document.getElementById("chgCurrentPassword").value;
+      const newPass = document.getElementById("chgNewPassword").value;
+      const confirmPass = document.getElementById("chgConfirmPassword").value;
+
+      if (newPass.length < 6) {
+        msgDiv.innerText = "La nueva contraseña debe tener al menos 6 caracteres.";
+        msgDiv.className = "auth-error-msg";
+        msgDiv.style.display = "block";
+        return;
+      }
+
+      if (newPass !== confirmPass) {
+        msgDiv.innerText = "Las nuevas contraseñas no coinciden.";
+        msgDiv.className = "auth-error-msg";
+        msgDiv.style.display = "block";
+        return;
+      }
+
+      try {
+        const user = auth.currentUser;
+        if (!user) throw new Error("No hay un usuario autenticado.");
+
+        // 1. Reautenticar al usuario por seguridad
+        const credential = EmailAuthProvider.credential(user.email, currentPass);
+        await reauthenticateWithCredential(user, credential);
+
+        // 2. Cambiar contraseña
+        await updatePassword(user, newPass);
+
+        // 3. Log Auditoría
+        await logAction(
+          currentUserProfile.nombre,
+          currentUserProfile.rol,
+          "Seguridad",
+          "Actualizó su contraseña de acceso al Dashboard"
+        );
+
+        msgDiv.innerText = "¡Contraseña actualizada con éxito!";
+        msgDiv.className = "success-msg";
+        msgDiv.style.display = "block";
+
+        setTimeout(() => {
+          closeModal();
+        }, 1500);
+      } catch (err) {
+        console.error("Error al cambiar contraseña:", err);
+        let errorMsg = err.message;
+        if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
+          errorMsg = "La contraseña actual es incorrecta.";
+        } else if (err.code === "auth/weak-password") {
+          errorMsg = "La contraseña es muy débil. Debe tener al menos 6 caracteres.";
+        }
+        msgDiv.innerText = "Error: " + errorMsg;
+        msgDiv.className = "auth-error-msg";
+        msgDiv.style.display = "block";
+      }
+    });
+  }
 }
 
 /* ============================================================

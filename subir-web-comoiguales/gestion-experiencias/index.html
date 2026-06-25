@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="dashboard.css?v=1.0.9">
+  <link rel="stylesheet" href="dashboard.css?v=1.1.2">
 </head>
 <body>
 
@@ -36,10 +36,13 @@
           <label for="loginEmail">Email Profesional</label>
           <input type="email" id="loginEmail" required placeholder="tuemail@comoiguales.com">
         </div>
-        <div class="form-group" style="position: relative;">
+        <div class="form-group" style="position: relative; margin-bottom: 8px;">
           <label for="loginPassword">Contraseña</label>
           <input type="password" id="loginPassword" required placeholder="••••••••" style="padding-right: 40px;">
           <button type="button" id="toggle-login-pass" onclick="const p = document.getElementById('loginPassword'); p.type = p.type === 'password' ? 'text' : 'password';" style="position: absolute; right: 12px; bottom: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; line-height: 1;">👁️</button>
+        </div>
+        <div style="text-align: right; margin-bottom: 20px;">
+          <a href="#" id="forgotPasswordLink" style="font-size: 0.82rem; color: var(--color-blue); text-decoration: none; opacity: 0.85; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.85">¿Olvidaste tu contraseña?</a>
         </div>
         <button type="submit" class="btn-primary-glow">INGRESAR AL PANEL</button>
       </form>
@@ -140,10 +143,11 @@
           <h4 id="userName">Cargando...</h4>
           <span id="userRole">Rol</span>
         </div>
+        <button id="changePasswordBtn" class="btn-logout" title="Cambiar mi contraseña" style="background: transparent; font-size: 1.1rem; padding: 5px; margin-right: 5px; border: none; cursor: pointer;">🔑</button>
         <button id="logoutBtn" class="btn-logout" title="Cerrar Sesión">➔</button>
       </div>
       <div class="sidebar-version" style="padding: 8px 15px; font-size: 0.72rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.05); text-align: center; opacity: 0.65;">
-        Mando Central v1.1.1
+        Mando Central v1.1.2
       </div>
     </aside>
 
@@ -925,6 +929,12 @@
             <option value="admin">Administrador (Acceso total)</option>
           </select>
         </div>
+        <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+          <label style="display: block; margin-bottom: 5px;">Seguridad de Acceso</label>
+          <button type="button" id="sendResetEmailBtn" class="btn-primary-glow" style="width: 100%; background: linear-gradient(135deg, #4f46e5, #3b82f6); font-size: 0.9rem; padding: 10px; border-radius: 6px; border: none; cursor: pointer;">
+            📧 Enviar Correo de Restablecimiento
+          </button>
+        </div>
         <div class="modal-buttons" style="margin-top: 1.5rem; display:flex; justify-content:flex-end; gap:10px;">
           <button type="submit" class="btn-primary-glow">Guardar Cambios</button>
           <button type="button" id="cancelEditGestorBtn" class="btn-secondary">Cancelar</button>
@@ -933,8 +943,35 @@
     </div>
   </div>
 
+  <!-- MODAL: CAMBIAR CONTRASEÑA PROPIA -->
+  <div id="changePasswordModal" class="modal">
+    <div class="modal-content glass" style="max-width: 400px;">
+      <span class="modal-close" id="closeChangePasswordModalBtn">&times;</span>
+      <h2>Cambiar mi Contraseña</h2>
+      <form id="changePasswordForm">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="chgCurrentPassword">Contraseña Actual</label>
+          <input type="password" id="chgCurrentPassword" required placeholder="••••••••" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="chgNewPassword">Nueva Contraseña</label>
+          <input type="password" id="chgNewPassword" required placeholder="Mínimo 6 caracteres" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label for="chgConfirmPassword">Confirmar Nueva Contraseña</label>
+          <input type="password" id="chgConfirmPassword" required placeholder="••••••••" style="width:100%; padding:10px; box-sizing:border-box; background: rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--border-color); border-radius:6px;">
+        </div>
+        <div id="chgPasswordMsg" style="display: none; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem;"></div>
+        <div class="modal-buttons" style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="submit" class="btn-primary-glow">Actualizar</button>
+          <button type="button" id="cancelChangePasswordBtn" class="btn-secondary">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Scripts principales como Módulo -->
-  <script type="module" src="dashboard.js?v=1.0.9"></script>
+  <script type="module" src="dashboard.js?v=1.1.2"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

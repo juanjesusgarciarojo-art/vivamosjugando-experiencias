@@ -1,11 +1,11 @@
-const CACHE_NAME = "comoiguales-dashboard-v1.1.1";
+const CACHE_NAME = "comoiguales-dashboard-v1.1.2";
 const ASSETS = [
-  "./",
-  "./index.html",
-  "./dashboard.css?v=1.1.1",
-  "./dashboard.js?v=1.1.1",
-  "./icon-CI.png",
-  "./manifest.json"
+   "./",
+   "./index.html",
+   "./dashboard.css?v=1.1.2",
+   "./dashboard.js?v=1.1.2",
+   "./icon-CI.png",
+   "./manifest.json"
 ];
 
 // Instalar Service Worker y almacenar en caché el "App Shell"
