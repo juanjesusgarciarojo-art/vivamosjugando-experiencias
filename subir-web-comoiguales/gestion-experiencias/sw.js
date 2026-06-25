@@ -1,9 +1,9 @@
-const CACHE_NAME = "comoiguales-dashboard-v1.0.9";
+const CACHE_NAME = "comoiguales-dashboard-v1.1.0";
 const ASSETS = [
   "./",
   "./index.html",
-  "./dashboard.css?v=1.0.9",
-  "./dashboard.js?v=1.0.9",
+  "./dashboard.css?v=1.1.0",
+  "./dashboard.js?v=1.1.0",
   "./icon-CI.png",
   "./manifest.json"
 ];
