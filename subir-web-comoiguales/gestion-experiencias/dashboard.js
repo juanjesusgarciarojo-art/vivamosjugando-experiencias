@@ -244,201 +244,6 @@ function switchView(viewId) {
 
   // Al salir de la vista de experiencias, volvemos a la pantalla de selección y apagamos listeners
   if (viewId !== "view-experiencias") {
-let clients = [];
-let gestores = [];
-let currentYear = new Date().getFullYear();
-let currentMonth = new Date().getMonth();
-
-// Estado global de la Operación Enigma
-let enigmaGroupUnsub = null;
-let enigmaMembersUnsub = null;
-let enigmaChatUnsub = null;
-let enigmaContactsUnsub = null;
-let enigmaTimerInterval = null;
-const ENIGMA_GROUP_ID = "grupo_activo";
-
-const MONTHS_SPANISH = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-];
-
-// ============================================================
-// 2. CONTROL DE ACCESO (AUTENTICACIÓN Y ROLES)
-// ============================================================
-
-document.addEventListener("DOMContentLoaded", () => {
-  initDateHeader();
-  checkFirstAdminSetup();
-
-  // Listeners de Autenticación
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      console.log("Sesión activa para UID:", user.uid);
-      try {
-        const userDoc = await getDoc(doc(db, "usuarios_dashboard", user.uid));
-        if (userDoc.exists()) {
-          currentUserProfile = { uid: user.uid, ...userDoc.data() };
-          console.log("Perfil del usuario cargado:", currentUserProfile);
-          setupDashboardUI();
-        } else {
-          // Si el usuario existe en Auth pero no tiene ficha en Firestore, bloqueamos acceso
-          showAuthError("Tu cuenta no está autorizada para acceder a este panel. Contacta al administrador.");
-          await signOut(auth);
-        }
-      } catch (err) {
-        console.error("Error al obtener perfil del usuario:", err);
-        showAuthError("Error de conexión. Inténtalo de nuevo.");
-        await signOut(auth);
-      }
-    } else {
-      console.log("No hay sesión activa.");
-      showLoginScreen();
-    }
-  });
-
-  // Envío Formulario de Iniciar Sesión
-  document.getElementById("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = document.getElementById("loginEmail").value.trim();
-    const pass = document.getElementById("loginPassword").value;
-    hideAuthError();
-
-    try {
-      await signInWithEmailAndPassword(auth, email, pass);
-    } catch (err) {
-      console.error("Error de login:", err);
-      if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
-        showAuthError("Credenciales incorrectas. Verifica tu email y contraseña.");
-      } else {
-        showAuthError("Error al iniciar sesión: " + err.message);
-      }
-    }
-  });
-
-  // Envío Formulario de Onboarding Primer Administrador
-  document.getElementById("setupForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const nombre = document.getElementById("setupNombre").value.trim();
-    const email = document.getElementById("setupEmail").value.trim();
-    const pass = document.getElementById("setupPassword").value;
-    hideAuthError();
-
-    try {
-      const userCred = await createUserWithEmailAndPassword(auth, email, pass);
-      const user = userCred.user;
-
-      // Crear perfil en Firestore como Admin
-      await setDoc(doc(db, "usuarios_dashboard", user.uid), {
-        nombre,
-        email,
-        rol: "admin",
-        fecha_creacion: serverTimestamp()
-      });
-
-      // Crear log de auditoría
-      await logAction(nombre, "admin", "Primer Onboarding", `Registró la cuenta de Administrador principal.`);
-      
-      console.log("Primer administrador creado con éxito.");
-    } catch (err) {
-      console.error("Error en onboarding:", err);
-      showAuthError("Error al registrar Administrador: " + err.message);
-    }
-  });
-
-  // Botón de Cerrar Sesión
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
-    if (confirm("¿Estás seguro de que quieres cerrar sesión?")) {
-      await signOut(auth);
-    }
-  });
-
-  // Toggle Sidebar (Contraer/Expandir menú)
-  const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
-  const dashboardContainer = document.getElementById("dashboardScreen");
-  const sidebarOverlay = document.getElementById("sidebarOverlay");
-
-  if (sidebarToggleBtn && dashboardContainer) {
-    sidebarToggleBtn.addEventListener("click", () => {
-      if (window.innerWidth <= 768) {
-        dashboardContainer.classList.toggle("sidebar-open");
-      } else {
-        dashboardContainer.classList.toggle("sidebar-collapsed");
-      }
-    });
-  }
-
-  if (sidebarOverlay && dashboardContainer) {
-    sidebarOverlay.addEventListener("click", () => {
-      dashboardContainer.classList.remove("sidebar-open");
-    });
-  }
-
-  // Navegación Sidebar
-  document.querySelectorAll(".nav-item").forEach(link => {
-    link.addEventListener("click", (e) => {
-      e.preventDefault();
-      const targetView = link.getAttribute("data-target");
-      switchView(targetView);
-
-      document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
-      link.classList.add("active");
-
-      // Cerrar menú lateral en móviles tras hacer clic
-      if (dashboardContainer) {
-        dashboardContainer.classList.remove("sidebar-open");
-      }
-    });
-  });
-});
-
-// Verifica si la colección de usuarios está vacía para mostrar el setup
-async function checkFirstAdminSetup() {
-  try {
-    const qSnap = await getDocs(query(collection(db, "usuarios_dashboard"), limit(1)));
-    if (qSnap.empty) {
-      document.getElementById("loginForm").style.display = "none";
-      document.getElementById("setupForm").style.display = "block";
-    } else {
-      document.getElementById("loginForm").style.display = "block";
-      document.getElementById("setupForm").style.display = "none";
-    }
-  } catch (err) {
-    console.error("Error comprobando onboarding:", err);
-  }
-}
-
-function showLoginScreen() {
-  document.getElementById("dashboardScreen").style.display = "none";
-  document.getElementById("authScreen").style.display = "flex";
-  currentUserProfile = null;
-  checkFirstAdminSetup();
-}
-
-function showAuthError(msg) {
-  const errDiv = document.getElementById("authError");
-  errDiv.innerText = msg;
-  errDiv.style.display = "block";
-}
-
-function hideAuthError() {
-  document.getElementById("authError").style.display = "none";
-}
-
-function initDateHeader() {
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  document.getElementById("headerDate").innerText = new Date().toLocaleDateString('es-ES', options);
-}
-
-// ============================================================
-// 3. VISTAS Y NAVEGACIÓN
-// ============================================================
-
-function switchView(viewId) {
-  document.querySelectorAll(".dashboard-view").forEach(view => view.classList.remove("active"));
-  document.getElementById(viewId).classList.add("active");
-
-  // Al salir de la vista de experiencias, volvemos a la pantalla de selección y apagamos listeners
-  if (viewId !== "view-experiencias") {
     const selector = document.getElementById("enigma-selector-screen");
     const consoleScreen = document.getElementById("enigma-console-screen");
     if (selector && consoleScreen) {
@@ -2590,10 +2395,277 @@ async function handleEmailUnlock() {
   errDiv.style.display = "block";
 
   const targetEmailEl = document.getElementById("unlock-target-email");
+  const unlockEmailTarget = targetEmailEl ? targetEmailEl.innerText : "contacto@vivamosjugando.com";
+
+  try {
+    const response = await fetch("mail_bridge.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "fetch_emails",
+        email: unlockEmailTarget,
+        password: password,
+        folder: "INBOX"
+      })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      if (!emailState.passwords) emailState.passwords = {};
+      emailState.passwords[unlockEmailTarget] = password;
+      emailState.isUnlocked = true;
+      emailState.currentActiveMailbox = unlockEmailTarget;
+      errDiv.style.display = "none";
+      loadEmailWorkspace();
+    } else {
+      errDiv.innerText = "Error: " + data.error;
+      errDiv.style.color = "#f87171";
+    }
+  } catch (err) {
+    console.error("Error al desbloquear correo:", err);
+    errDiv.innerText = "Error de conexión con el servidor.";
+    errDiv.style.color = "#f87171";
+  }
+}
+
+async function loadEmailWorkspace() {
+  const unlockScreen = document.getElementById("email-unlock-screen");
+  const workspaceScreen = document.getElementById("email-workspace-screen");
+  
+  unlockScreen.style.display = "none";
+  workspaceScreen.style.display = "flex";
+
+  // Rellenar pestañas de buzones
+  const tabsContainer = document.getElementById("mailboxTabsContainer");
+  tabsContainer.innerHTML = "";
+
+  // 1. Pestaña Correo Personal (si tiene y no es duplicado)
+  if (emailState.personalEmail && 
+      emailState.personalEmail !== "vivamosjugando@vivamosjugando.com" && 
+      emailState.personalEmail !== "contacto@vivamosjugando.com") {
+    const pTab = document.createElement("button");
+    pTab.className = "mailbox-tab" + (emailState.currentActiveMailbox === emailState.personalEmail ? " active" : "");
+    pTab.innerText = `💼 Mi Correo (${emailState.personalEmail})`;
+    pTab.addEventListener("click", () => {
+      switchMailbox(emailState.personalEmail);
+    });
+    tabsContainer.appendChild(pTab);
+  }
+
+  // 2. Pestaña Correo de Administración (siempre visible para administradores)
+  if (currentUserProfile.rol === "admin") {
+    const aTab = document.createElement("button");
+    aTab.className = "mailbox-tab" + (emailState.currentActiveMailbox === "vivamosjugando@vivamosjugando.com" ? " active" : "");
+    aTab.innerText = "👑 Administración (vivamosjugando@)";
+    aTab.addEventListener("click", () => {
+      switchMailbox("vivamosjugando@vivamosjugando.com");
+    });
+    tabsContainer.appendChild(aTab);
+  }
+
+  // 3. Pestaña Buzón General de Soporte
+  if (emailState.hasAccessContacto) {
+    const cTab = document.createElement("button");
+    cTab.className = "mailbox-tab" + (emailState.currentActiveMailbox === "contacto@vivamosjugando.com" ? " active" : "");
+    cTab.innerText = "📢 Buzón de Soporte (contacto@)";
+    cTab.addEventListener("click", () => {
+      switchMailbox("contacto@vivamosjugando.com");
+    });
+    tabsContainer.appendChild(cTab);
+  }
+
+  const indicator = document.getElementById("active-mailbox-indicator");
+  if (indicator) {
+    if (emailState.currentActiveMailbox === "contacto@vivamosjugando.com") {
+      indicator.innerText = "📢 BUZÓN DE CONTACTO";
+      indicator.style.color = "#f59e0b";
+    } else if (emailState.currentActiveMailbox === "vivamosjugando@vivamosjugando.com") {
+      indicator.innerText = "👑 CORREO DE ADMINISTRACIÓN";
+      indicator.style.color = "var(--color-magenta)";
+    } else {
+      indicator.innerText = "💼 CORREO PERSONAL";
+      indicator.style.color = "var(--color-violet)";
+    }
+  }
+
+  refreshEmailList();
+}
+
+function switchMailbox(mailboxName) {
+  emailState.currentActiveMailbox = mailboxName;
+  document.querySelectorAll(".mailbox-tab").forEach(tab => {
+    if (tab.innerText.includes(mailboxName)) {
+      tab.classList.add("active");
+    } else {
+      tab.classList.remove("active");
+    }
+  });
+
+  const indicator = document.getElementById("active-mailbox-indicator");
+  if (indicator) {
+    if (mailboxName === "contacto@vivamosjugando.com") {
+      indicator.innerText = "📢 BUZÓN DE CONTACTO";
+      indicator.style.color = "#f59e0b";
+    } else if (mailboxName === "vivamosjugando@vivamosjugando.com") {
+      indicator.innerText = "👑 CORREO DE ADMINISTRACIÓN";
+      indicator.style.color = "var(--color-magenta)";
+    } else {
+      indicator.innerText = "💼 CORREO PERSONAL";
+      indicator.style.color = "var(--color-violet)";
+    }
+  }
+
+  // Quitar el visor en móviles al cambiar de buzón para ver la lista de correos
+  const mainSplit = document.querySelector(".email-main-split");
+  if (mainSplit) {
+    mainSplit.classList.remove("show-viewer");
+  }
+
+  // Reset folder to INBOX
+  emailState.currentActiveFolder = "INBOX";
+  document.querySelectorAll(".btn-folder").forEach(btn => {
+    if (btn.getAttribute("data-folder") === "INBOX") {
+      btn.style.background = "var(--color-violet)";
+      btn.style.color = "#fff";
+      btn.style.border = "none";
+    } else {
+      btn.style.background = "transparent";
+      btn.style.color = "var(--text-muted)";
+      btn.style.border = "1px solid var(--border-color)";
+    }
+  });
+
+  // Limpiar vista
+  document.getElementById("email-viewer-empty").style.display = "block";
+  document.getElementById("email-viewer-content").style.display = "none";
+  document.getElementById("email-composer-content").style.display = "none";
+  emailState.activeEmail = null;
+
+  refreshEmailList();
+}
+
+async function refreshEmailList() {
+  const listContainer = document.getElementById("emailListScroll");
+  listContainer.innerHTML = '<p class="loading-text" style="color: var(--text-muted); text-align: center; margin-top: 20px;">Cargando correos...</p>';
+
+  const currentMailbox = emailState.currentActiveMailbox;
+  if (!emailState.passwords) emailState.passwords = {};
+  let currentPassword = emailState.passwords[currentMailbox] || "";
+
+  if (!currentPassword) {
+    const p = prompt(`Introduce la contraseña para acceder a: ${currentMailbox}`);
+    if (!p) {
+      listContainer.innerHTML = `<p class="loading-text" style="color: #f87171;">Contraseña requerida para acceder a este buzón.</p>`;
+      return;
+    }
+    emailState.passwords[currentMailbox] = p;
+    currentPassword = p;
+  }
+
+  try {
+    const response = await fetch("mail_bridge.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "fetch_emails",
+        email: currentMailbox,
+        password: currentPassword,
+        folder: emailState.currentActiveFolder
+      })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      emailState.emails = data.emails;
+      renderEmailList();
+    } else {
+      listContainer.innerHTML = `<p class="loading-text" style="color: #f87171;">Error: ${data.error}</p>`;
+    }
+  } catch (err) {
+    console.error("Error al refrescar lista de correos:", err);
+    listContainer.innerHTML = '<p class="loading-text" style="color: #f87171;">Error al conectar con la API de correo.</p>';
+  }
+}
+
+function renderEmailList() {
+  const listContainer = document.getElementById("emailListScroll");
+  listContainer.innerHTML = "";
+
+  if (emailState.emails.length === 0) {
+    listContainer.innerHTML = '<p class="loading-text" style="color: var(--text-muted); text-align: center; margin-top: 20px;">Bandeja vacía.</p>';
+    return;
+  }
+
+  emailState.emails.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "email-item" + (item.unseen ? " unread" : "") + (emailState.activeEmail && emailState.activeEmail.msg_id === item.msg_id ? " active" : "");
+    
+    div.innerHTML = `
+      <div class="email-item-header">
+        <span class="email-item-sender">${item.from_name}</span>
+        <span class="email-item-date">${formatEmailDate(item.date)}</span>
+      </div>
+      <div class="email-item-subject">${item.subject}</div>
+    `;
+
+    div.addEventListener("click", () => {
+      document.querySelectorAll(".email-item").forEach(el => el.classList.remove("active"));
+      div.classList.remove("unread");
+      div.classList.add("active");
+      openEmail(item);
+    });
+
+    listContainer.appendChild(div);
+  });
+}
+
+function formatEmailDate(dateStr) {
+  try {
+    const d = new Date(dateStr.replace(' ', 'T'));
+    const now = new Date();
+    if (d.toDateString() === now.toDateString()) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+async function openEmail(emailItem) {
+  document.getElementById("email-viewer-empty").style.display = "none";
+  document.getElementById("email-composer-content").style.display = "none";
+  const contentPanel = document.getElementById("email-viewer-content");
+  contentPanel.style.display = "flex";
+
+  // Mostrar visor de correos en móvil
+  const mainSplit = document.querySelector(".email-main-split");
+  if (mainSplit) {
+    mainSplit.classList.add("show-viewer");
+  }
+
+  const subjectEl = document.getElementById("email-view-subject");
+  const fromEl = document.getElementById("email-view-from");
+  const dateEl = document.getElementById("email-view-date");
+  const bodyEl = document.getElementById("emailViewBody");
+  const replyBox = document.getElementById("emailReplyBox");
+
+  subjectEl.innerText = emailItem.subject;
+  fromEl.innerText = `De: ${emailItem.from_name} <${emailItem.from_email}>`;
+  dateEl.innerText = `Fecha: ${emailItem.date}`;
+  bodyEl.innerHTML = '<p class="loading-text" style="color: var(--text-muted); text-align: center; margin-top: 20px;">Cargando contenido...</p>';
+
+  if (emailState.currentActiveFolder === "Sent") {
+    replyBox.style.display = "none";
+  } else {
+    replyBox.style.display = "flex";
+  }
+
+  document.getElementById("email-reply-text").value = "";
   document.getElementById("email-reply-status").innerText = "";
 
   const currentMailbox = emailState.currentActiveMailbox;
-  const currentPassword = (currentMailbox === emailState.personalEmail) ? emailState.personalPassword : emailState.contactoPassword;
+  const currentPassword = emailState.passwords[currentMailbox] || "";
 
   try {
     const response = await fetch("mail_bridge.php", {
@@ -2634,7 +2706,7 @@ async function sendEmailReply() {
   statusDiv.style.color = "var(--color-violet)";
 
   const currentMailbox = emailState.currentActiveMailbox;
-  const currentPassword = (currentMailbox === emailState.personalEmail) ? emailState.personalPassword : emailState.contactoPassword;
+  const currentPassword = emailState.passwords[currentMailbox] || "";
 
   const originalEmail = emailState.activeEmail;
   const replySubject = originalEmail.subject.toLowerCase().startsWith("re:") ? originalEmail.subject : "Re: " + originalEmail.subject;
@@ -2695,7 +2767,7 @@ async function sendNewEmail() {
   statusDiv.style.color = "var(--color-violet)";
 
   const currentMailbox = emailState.currentActiveMailbox;
-  const currentPassword = (currentMailbox === emailState.personalEmail) ? emailState.personalPassword : emailState.contactoPassword;
+  const currentPassword = emailState.passwords[currentMailbox] || "";
 
   const htmlBody = `<div>${bodyText.replace(/\n/g, '<br>')}</div>`;
 
