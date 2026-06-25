@@ -36,9 +36,10 @@
           <label for="loginEmail">Email Profesional</label>
           <input type="email" id="loginEmail" required placeholder="tuemail@comoiguales.com">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="position: relative;">
           <label for="loginPassword">Contraseña</label>
-          <input type="password" id="loginPassword" required placeholder="••••••••">
+          <input type="password" id="loginPassword" required placeholder="••••••••" style="padding-right: 40px;">
+          <button type="button" id="toggle-login-pass" style="position: absolute; right: 12px; bottom: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; line-height: 1;">👁️</button>
         </div>
         <button type="submit" class="btn-primary-glow">INGRESAR AL PANEL</button>
       </form>
@@ -142,7 +143,7 @@
         <button id="logoutBtn" class="btn-logout" title="Cerrar Sesión">➔</button>
       </div>
       <div class="sidebar-version" style="padding: 8px 15px; font-size: 0.72rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.05); text-align: center; opacity: 0.65;">
-        Mando Central v1.1.0
+        Mando Central v1.1.1
       </div>
     </aside>
 

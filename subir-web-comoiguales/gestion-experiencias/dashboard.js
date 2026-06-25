@@ -75,6 +75,16 @@ document.addEventListener("DOMContentLoaded", () => {
   initDateHeader();
   checkFirstAdminSetup();
 
+  // Toggle contraseña de Login
+  const toggleLoginPassBtn = document.getElementById("toggle-login-pass");
+  const loginPassInput = document.getElementById("loginPassword");
+  if (toggleLoginPassBtn && loginPassInput) {
+    toggleLoginPassBtn.addEventListener("click", () => {
+      const type = loginPassInput.getAttribute("type") === "password" ? "text" : "password";
+      loginPassInput.setAttribute("type", type);
+    });
+  }
+
   // Listeners de Autenticación
   onAuthStateChanged(auth, async (user) => {
     if (user) {
