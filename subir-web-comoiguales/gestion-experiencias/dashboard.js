@@ -480,6 +480,42 @@ function startDataListeners() {
 
   // 5. HISTORIAL DE AUDITORÍA
   if (isSearchAdmin) {
+    const clearBtn = document.getElementById("clearAuditBtn");
+    if (clearBtn) {
+      clearBtn.style.display = "block";
+      if (!clearBtn.dataset.hasListener) {
+        clearBtn.dataset.hasListener = "true";
+        clearBtn.addEventListener("click", async () => {
+          const confirmacion = confirm("⚠️ ¿ESTÁ SEGURO?\n\nEsto borrará permanentemente todo el historial de auditoría de la plataforma.\nEsta acción no se puede deshacer.");
+          if (confirmacion) {
+            try {
+              const snap = await getDocs(collection(db, "historial_acciones"));
+              if (snap.empty) {
+                alert("No hay registros en el historial para eliminar.");
+                return;
+              }
+              
+              const promises = snap.docs.map(doc => deleteDoc(doc.ref));
+              await Promise.all(promises);
+
+              // Registrar la propia acción de vaciado en el nuevo historial
+              await logAction(
+                currentUserProfile.nombre,
+                currentUserProfile.rol,
+                "Seguridad",
+                "Vació el historial de auditoría de la plataforma"
+              );
+
+              alert("Historial de auditoría vaciado correctamente.");
+            } catch (err) {
+              console.error("Error al vaciar historial de auditoría:", err);
+              alert("Error al vaciar el historial: " + err.message);
+            }
+          }
+        });
+      }
+    }
+
     onSnapshot(query(collection(db, "historial_acciones"), orderBy("fecha", "desc"), limit(50)), (snap) => {
       const auditDiv = document.getElementById("auditListItems");
       auditDiv.innerHTML = "";
