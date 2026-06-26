@@ -46,12 +46,13 @@ switch ($action) {
         $subject = isset($input['subject']) ? trim($input['subject']) : '';
         $body = isset($input['body']) ? trim($input['body']) : '';
         $replyToId = isset($input['reply_to_id']) ? trim($input['reply_to_id']) : ''; // Message-ID original si es respuesta
+        $attachments = isset($input['attachments']) ? $input['attachments'] : [];
         
         if (!$to || !$subject || !$body) {
             echo json_encode(["success" => false, "error" => "Faltan datos del envío (to, subject, body)."]);
             exit;
         }
-        sendEmailSMTP($email, $password, $to, $subject, $body, $replyToId);
+        sendEmailSMTP($email, $password, $to, $subject, $body, $replyToId, $attachments);
         break;
     default:
         echo json_encode(["success" => false, "error" => "Acción no válida."]);
@@ -230,7 +231,7 @@ function parseStructure($mbox, $msgId, $part, $partNum, &$htmlBody, &$textBody) 
 /**
  * Envía un correo electrónico mediante sockets SMTP directos
  */
-function sendEmailSMTP($username, $password, $to, $subject, $body, $replyToId = '') {
+function sendEmailSMTP($username, $password, $to, $subject, $body, $replyToId = '', $attachments = []) {
     // Conectar a SMTP de Hostinger
     $socket = @fsockopen(SMTP_SERVER, SMTP_PORT, $errno, $errstr, 15);
     if (!$socket) {
@@ -273,9 +274,10 @@ function sendEmailSMTP($username, $password, $to, $subject, $body, $replyToId = 
     fwrite($socket, "DATA\r\n");
     getResponse($socket, "354");
 
-    // Cabeceras y cuerpo
+    $boundary = "----=_Part_" . md5(time() . uniqid());
+
+    // Cabeceras
     $headers = "MIME-Version: 1.0\r\n";
-    $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
     $headers .= "From: ComoIguales <$username>\r\n";
     $headers .= "To: <$to>\r\n";
     $headers .= "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=\r\n";
@@ -291,8 +293,44 @@ function sendEmailSMTP($username, $password, $to, $subject, $body, $replyToId = 
     $msgId = "<" . time() . "." . uniqid() . "@vivamosjugando.com>";
     $headers .= "Message-ID: $msgId\r\n";
 
+    $fullBody = "";
+    if (empty($attachments)) {
+        // Enviar normal sin adjuntos
+        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $fullBody = $body;
+    } else {
+        // Enviar con adjuntos (multipart/mixed)
+        $headers .= "Content-Type: multipart/mixed; boundary=\"$boundary\"\r\n";
+        
+        $fullBody = "--$boundary\r\n";
+        $fullBody .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $fullBody .= "Content-Transfer-Encoding: 7bit\r\n\r\n";
+        $fullBody .= $body . "\r\n\r\n";
+        
+        foreach ($attachments as $attach) {
+            $fileName = $attach['name'];
+            $fileType = $attach['type'];
+            $fileData = $attach['data']; // base64 string
+            
+            // Si viene con el prefijo "data:*/*;base64,", limpiarlo
+            if (strpos($fileData, ';base64,') !== false) {
+                $fileData = explode(';base64,', $fileData)[1];
+            }
+            
+            // Particionar el base64 en líneas de 76 caracteres
+            $chunkedData = chunk_split($fileData, 76, "\r\n");
+            
+            $fullBody .= "--$boundary\r\n";
+            $fullBody .= "Content-Type: $fileType; name=\"$fileName\"\r\n";
+            $fullBody .= "Content-Transfer-Encoding: base64\r\n";
+            $fullBody .= "Content-Disposition: attachment; filename=\"$fileName\"\r\n\r\n";
+            $fullBody .= $chunkedData . "\r\n";
+        }
+        $fullBody .= "--$boundary--\r\n";
+    }
+
     // Enviar cabeceras, línea en blanco y cuerpo
-    fwrite($socket, $headers . "\r\n" . $body . "\r\n.\r\n");
+    fwrite($socket, $headers . "\r\n" . $fullBody . "\r\n.\r\n");
     $sendResponse = getResponse($socket, "250");
 
     // Salir de la conexión

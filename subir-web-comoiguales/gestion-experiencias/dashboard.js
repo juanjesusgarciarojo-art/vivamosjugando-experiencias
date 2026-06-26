@@ -2608,6 +2608,23 @@ function setupEmailEvents() {
       });
     }
   });
+
+  // Manejo de archivos adjuntos
+  const composeFilesInput = document.getElementById("email-compose-files");
+  if (composeFilesInput) {
+    if (!composeFilesInput.dataset.hasListener) {
+      composeFilesInput.dataset.hasListener = "true";
+      composeFilesInput.addEventListener("change", handleComposeFilesChange);
+    }
+  }
+
+  const replyFilesInput = document.getElementById("email-reply-files");
+  if (replyFilesInput) {
+    if (!replyFilesInput.dataset.hasListener) {
+      replyFilesInput.dataset.hasListener = "true";
+      replyFilesInput.addEventListener("change", handleReplyFilesChange);
+    }
+  }
 }
 
 async function handleEmailUnlock() {
@@ -2960,9 +2977,123 @@ async function openEmail(emailItem) {
   }
 }
 
+// Variables de adjuntos para correo
+let composeAttachments = [];
+let replyAttachments = [];
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve({
+        name: file.name,
+        type: file.type || "application/octet-stream",
+        data: reader.result
+      });
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleComposeFilesChange(e) {
+  const files = Array.from(e.target.files);
+  const previewDiv = document.getElementById("email-compose-files-preview");
+  if (!previewDiv) return;
+
+  const MAX_TOTAL_SIZE = 12 * 1024 * 1024; // 12 MB
+
+  files.forEach(async (file) => {
+    if (composeAttachments.some(a => a.name === file.name && a.size === file.size)) return;
+    
+    const currentTotal = composeAttachments.reduce((sum, f) => sum + (f.size || 0), 0);
+    if (currentTotal + file.size > MAX_TOTAL_SIZE) {
+      alert(`El archivo "${file.name}" supera el límite total permitido de 12 MB.`);
+      return;
+    }
+
+    try {
+      const base64File = await readFileAsBase64(file);
+      base64File.size = file.size;
+      composeAttachments.push(base64File);
+      renderAttachmentsPreview("compose");
+    } catch (err) {
+      console.error("Error al leer archivo:", err);
+      alert("No se pudo cargar el archivo: " + file.name);
+    }
+  });
+  
+  e.target.value = "";
+}
+
+function handleReplyFilesChange(e) {
+  const files = Array.from(e.target.files);
+  const previewDiv = document.getElementById("email-reply-files-preview");
+  if (!previewDiv) return;
+
+  const MAX_TOTAL_SIZE = 12 * 1024 * 1024; // 12 MB
+
+  files.forEach(async (file) => {
+    if (replyAttachments.some(a => a.name === file.name && a.size === file.size)) return;
+    
+    const currentTotal = replyAttachments.reduce((sum, f) => sum + (f.size || 0), 0);
+    if (currentTotal + file.size > MAX_TOTAL_SIZE) {
+      alert(`El archivo "${file.name}" supera el límite total permitido de 12 MB.`);
+      return;
+    }
+
+    try {
+      const base64File = await readFileAsBase64(file);
+      base64File.size = file.size;
+      replyAttachments.push(base64File);
+      renderAttachmentsPreview("reply");
+    } catch (err) {
+      console.error("Error al leer archivo:", err);
+      alert("No se pudo cargar el archivo: " + file.name);
+    }
+  });
+  
+  e.target.value = "";
+}
+
+function renderAttachmentsPreview(type) {
+  const list = type === "compose" ? composeAttachments : replyAttachments;
+  const previewDiv = document.getElementById(type === "compose" ? "email-compose-files-preview" : "email-reply-files-preview");
+  if (!previewDiv) return;
+
+  previewDiv.innerHTML = "";
+  list.forEach((file, index) => {
+    const chip = document.createElement("div");
+    chip.style.cssText = "display: inline-flex; align-items: center; gap: 6px; background: rgba(139, 92, 246, 0.15); border: 1px solid var(--color-violet); color: #fff; padding: 4px 8px; border-radius: 20px; font-size: 0.8rem; margin: 2px;";
+    
+    const nameSpan = document.createElement("span");
+    nameSpan.innerText = file.name;
+    
+    const sizeKb = file.size ? ` (${Math.round(file.size / 1024)} KB)` : "";
+    const sizeSpan = document.createElement("span");
+    sizeSpan.innerText = sizeKb;
+    sizeSpan.style.color = "#aaa";
+    
+    const removeBtn = document.createElement("span");
+    removeBtn.innerText = "×";
+    removeBtn.style.cssText = "cursor: pointer; font-weight: bold; font-size: 1.1rem; color: #f87171; line-height: 1; padding: 0 2px;";
+    removeBtn.addEventListener("click", () => {
+      list.splice(index, 1);
+      renderAttachmentsPreview(type);
+    });
+
+    chip.appendChild(nameSpan);
+    chip.appendChild(sizeSpan);
+    chip.appendChild(removeBtn);
+    previewDiv.appendChild(chip);
+  });
+}
+
 async function sendEmailReply() {
   const replyText = document.getElementById("email-reply-text").value.trim();
   const statusDiv = document.getElementById("email-reply-status");
+  const btnSend = document.getElementById("btn-send-email-reply");
+  const replyInput = document.getElementById("email-reply-text");
   
   if (!replyText) {
     statusDiv.innerText = "Por favor, escribe una respuesta.";
@@ -2972,6 +3103,9 @@ async function sendEmailReply() {
 
   statusDiv.innerText = "Enviando respuesta...";
   statusDiv.style.color = "var(--color-violet)";
+  
+  if (btnSend) btnSend.disabled = true;
+  if (replyInput) replyInput.disabled = true;
 
   const currentMailbox = emailState.currentActiveMailbox;
   const currentPassword = emailState.passwords[currentMailbox] || "";
@@ -2992,7 +3126,8 @@ async function sendEmailReply() {
         to: originalEmail.from_email,
         subject: replySubject,
         body: htmlBody,
-        reply_to_id: originalEmail.message_id
+        reply_to_id: originalEmail.message_id,
+        attachments: replyAttachments
       })
     });
 
@@ -3001,6 +3136,10 @@ async function sendEmailReply() {
       statusDiv.innerText = "✓ Respuesta enviada con éxito.";
       statusDiv.style.color = "#33ff33";
       document.getElementById("email-reply-text").value = "";
+      
+      // Limpiar adjuntos
+      replyAttachments = [];
+      renderAttachmentsPreview("reply");
       
       await logAction(
         currentUserProfile.nombre,
@@ -3016,6 +3155,9 @@ async function sendEmailReply() {
     console.error("Error al enviar respuesta:", err);
     statusDiv.innerText = "Error al conectar con el servidor.";
     statusDiv.style.color = "#f87171";
+  } finally {
+    if (btnSend) btnSend.disabled = false;
+    if (replyInput) replyInput.disabled = false;
   }
 }
 
@@ -3024,6 +3166,12 @@ async function sendNewEmail() {
   const subject = document.getElementById("email-subject").value.trim();
   const bodyText = document.getElementById("email-body").value.trim();
   const statusDiv = document.getElementById("email-compose-status");
+  const btnSend = document.getElementById("btn-send-new-email");
+  const inputs = [
+    document.getElementById("email-to"),
+    document.getElementById("email-subject"),
+    document.getElementById("email-body")
+  ];
 
   if (!to || !subject || !bodyText) {
     statusDiv.innerText = "Por favor, rellena todos los campos.";
@@ -3033,6 +3181,9 @@ async function sendNewEmail() {
 
   statusDiv.innerText = "Enviando mensaje...";
   statusDiv.style.color = "var(--color-violet)";
+  
+  if (btnSend) btnSend.disabled = true;
+  inputs.forEach(el => { if (el) el.disabled = true; });
 
   const currentMailbox = emailState.currentActiveMailbox;
   const currentPassword = emailState.passwords[currentMailbox] || "";
@@ -3049,7 +3200,8 @@ async function sendNewEmail() {
         password: currentPassword,
         to: to,
         subject: subject,
-        body: htmlBody
+        body: htmlBody,
+        attachments: composeAttachments
       })
     });
 
@@ -3062,6 +3214,10 @@ async function sendNewEmail() {
       document.getElementById("email-subject").value = "";
       document.getElementById("email-body").value = "";
       
+      // Limpiar adjuntos
+      composeAttachments = [];
+      renderAttachmentsPreview("compose");
+      
       await logAction(
         currentUserProfile.nombre,
         currentUserProfile.rol,
@@ -3072,6 +3228,12 @@ async function sendNewEmail() {
       setTimeout(() => {
         document.getElementById("email-composer-content").style.display = "none";
         document.getElementById("email-viewer-empty").style.display = "block";
+        
+        // Regresar vista en móviles
+        const mainSplit = document.querySelector(".email-main-split");
+        if (mainSplit) {
+          mainSplit.classList.remove("show-viewer");
+        }
       }, 1500);
     } else {
       statusDiv.innerText = "Error: " + data.error;
@@ -3081,6 +3243,9 @@ async function sendNewEmail() {
     console.error("Error al enviar nuevo correo:", err);
     statusDiv.innerText = "Error de red al enviar.";
     statusDiv.style.color = "#f87171";
+  } finally {
+    if (btnSend) btnSend.disabled = false;
+    inputs.forEach(el => { if (el) el.disabled = false; });
   }
 }
 
