@@ -2492,109 +2492,153 @@ function setupEmailEvents() {
   const btnUnlock = document.getElementById("btn-unlock-email");
   const sessionPassInput = document.getElementById("email-session-password");
   const togglePassBtn = document.getElementById("toggle-email-pass");
+  const errDiv = document.getElementById("email-unlock-error");
   
   if (togglePassBtn && sessionPassInput) {
-    togglePassBtn.addEventListener("click", () => {
-      const type = sessionPassInput.getAttribute("type") === "password" ? "text" : "password";
-      sessionPassInput.setAttribute("type", type);
-    });
+    if (!togglePassBtn.dataset.hasListener) {
+      togglePassBtn.dataset.hasListener = "true";
+      togglePassBtn.addEventListener("click", () => {
+        const type = sessionPassInput.getAttribute("type") === "password" ? "text" : "password";
+        sessionPassInput.setAttribute("type", type);
+      });
+    }
   }
   
   if (btnUnlock && sessionPassInput) {
-    btnUnlock.addEventListener("click", handleEmailUnlock);
-    sessionPassInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") handleEmailUnlock();
-    });
+    if (!btnUnlock.dataset.hasListener) {
+      btnUnlock.dataset.hasListener = "true";
+      btnUnlock.addEventListener("click", handleEmailUnlock);
+      sessionPassInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") handleEmailUnlock();
+      });
+      sessionPassInput.addEventListener("input", () => {
+        sessionPassInput.style.borderColor = "var(--border-color)";
+        if (errDiv) errDiv.style.display = "none";
+      });
+    }
   }
 
   // Botones de Navegación de Carpetas
   document.querySelectorAll(".btn-folder").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      document.querySelectorAll(".btn-folder").forEach(b => {
-        b.style.background = "transparent";
-        b.style.color = "var(--text-muted)";
-        b.style.border = "1px solid var(--border-color)";
+    if (!btn.dataset.hasListener) {
+      btn.dataset.hasListener = "true";
+      btn.addEventListener("click", (e) => {
+        document.querySelectorAll(".btn-folder").forEach(b => {
+          b.style.background = "transparent";
+          b.style.color = "var(--text-muted)";
+          b.style.border = "1px solid var(--border-color)";
+        });
+        
+        btn.style.background = "var(--color-violet)";
+        btn.style.color = "#fff";
+        btn.style.border = "none";
+        
+        emailState.currentActiveFolder = btn.getAttribute("data-folder");
+        refreshEmailList();
       });
-      
-      btn.style.background = "var(--color-violet)";
-      btn.style.color = "#fff";
-      btn.style.border = "none";
-      
-      emailState.currentActiveFolder = btn.getAttribute("data-folder");
-      refreshEmailList();
-    });
+    }
   });
 
   // Botones de Redacción
   const btnCompose = document.getElementById("btn-compose-email");
   const btnCancelCompose = document.getElementById("btn-cancel-compose");
   if (btnCompose) {
-    btnCompose.addEventListener("click", () => {
-      document.getElementById("email-viewer-empty").style.display = "none";
-      document.getElementById("email-viewer-content").style.display = "none";
-      document.getElementById("email-composer-content").style.display = "block";
-      
-      // Mostrar visor en móviles al redactar
-      const mainSplit = document.querySelector(".email-main-split");
-      if (mainSplit) {
-        mainSplit.classList.add("show-viewer");
-      }
-    });
-  }
-  if (btnCancelCompose) {
-    btnCancelCompose.addEventListener("click", () => {
-      document.getElementById("email-composer-content").style.display = "none";
-      if (emailState.activeEmail) {
-        document.getElementById("email-viewer-content").style.display = "flex";
-      } else {
-        document.getElementById("email-viewer-empty").style.display = "block";
+    if (!btnCompose.dataset.hasListener) {
+      btnCompose.dataset.hasListener = "true";
+      btnCompose.addEventListener("click", () => {
+        document.getElementById("email-viewer-empty").style.display = "none";
+        document.getElementById("email-viewer-content").style.display = "none";
+        document.getElementById("email-composer-content").style.display = "block";
         
-        // Quitar visor en móviles si se cancela y no hay email activo
+        // Mostrar visor en móviles al redactar
         const mainSplit = document.querySelector(".email-main-split");
         if (mainSplit) {
-          mainSplit.classList.remove("show-viewer");
+          mainSplit.classList.add("show-viewer");
         }
-      }
-    });
+      });
+    }
+  }
+  if (btnCancelCompose) {
+    if (!btnCancelCompose.dataset.hasListener) {
+      btnCancelCompose.dataset.hasListener = "true";
+      btnCancelCompose.addEventListener("click", () => {
+        document.getElementById("email-composer-content").style.display = "none";
+        if (emailState.activeEmail) {
+          document.getElementById("email-viewer-content").style.display = "flex";
+        } else {
+          document.getElementById("email-viewer-empty").style.display = "block";
+          
+          // Quitar visor en móviles si se cancela y no hay email activo
+          const mainSplit = document.querySelector(".email-main-split");
+          if (mainSplit) {
+            mainSplit.classList.remove("show-viewer");
+          }
+        }
+      });
+    }
   }
 
   // Botón Enviar Nuevo Correo
   const btnSendNew = document.getElementById("btn-send-new-email");
   if (btnSendNew) {
-    btnSendNew.addEventListener("click", sendNewEmail);
+    if (!btnSendNew.dataset.hasListener) {
+      btnSendNew.dataset.hasListener = "true";
+      btnSendNew.addEventListener("click", sendNewEmail);
+    }
   }
 
   // Botón Enviar Respuesta
   const btnSendReply = document.getElementById("btn-send-email-reply");
   if (btnSendReply) {
-    btnSendReply.addEventListener("click", sendEmailReply);
+    if (!btnSendReply.dataset.hasListener) {
+      btnSendReply.dataset.hasListener = "true";
+      btnSendReply.addEventListener("click", sendEmailReply);
+    }
   }
 
   // Botones Volver en móvil
   document.querySelectorAll(".email-mobile-back-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const mainSplit = document.querySelector(".email-main-split");
-      if (mainSplit) {
-        mainSplit.classList.remove("show-viewer");
-      }
-    });
+    if (!btn.dataset.hasListener) {
+      btn.dataset.hasListener = "true";
+      btn.addEventListener("click", () => {
+        const mainSplit = document.querySelector(".email-main-split");
+        if (mainSplit) {
+          mainSplit.classList.remove("show-viewer");
+        }
+      });
+    }
   });
 }
 
 async function handleEmailUnlock() {
   const passInput = document.getElementById("email-session-password");
   const errDiv = document.getElementById("email-unlock-error");
-  const password = passInput.value;
+  const btnUnlock = document.getElementById("btn-unlock-email");
+  const password = passInput ? passInput.value : "";
   
   if (!password) {
-    errDiv.innerText = "Por favor, introduce tu contraseña.";
-    errDiv.style.display = "block";
+    if (errDiv) {
+      errDiv.innerText = "Por favor, introduce tu contraseña.";
+      errDiv.style.display = "block";
+      errDiv.style.color = "#f87171";
+    }
+    if (passInput) {
+      passInput.style.borderColor = "#f87171";
+      passInput.focus();
+    }
     return;
   }
 
-  errDiv.innerText = "Verificando...";
-  errDiv.style.color = "var(--color-violet)";
-  errDiv.style.display = "block";
+  if (errDiv) {
+    errDiv.innerText = "Verificando...";
+    errDiv.style.color = "var(--color-violet)";
+    errDiv.style.display = "block";
+  }
+  if (passInput) {
+    passInput.style.borderColor = "var(--border-color)";
+    passInput.disabled = true;
+  }
+  if (btnUnlock) btnUnlock.disabled = true;
 
   const targetEmailEl = document.getElementById("unlock-target-email");
   const unlockEmailTarget = targetEmailEl ? targetEmailEl.innerText : "contacto@vivamosjugando.com";
@@ -2617,16 +2661,38 @@ async function handleEmailUnlock() {
       emailState.passwords[unlockEmailTarget] = password;
       emailState.isUnlocked = true;
       emailState.currentActiveMailbox = unlockEmailTarget;
-      errDiv.style.display = "none";
+      
+      if (errDiv) errDiv.style.display = "none";
+      if (btnUnlock) btnUnlock.disabled = false;
+      if (passInput) passInput.disabled = false;
+      
       loadEmailWorkspace();
     } else {
-      errDiv.innerText = "Error: " + data.error;
-      errDiv.style.color = "#f87171";
+      if (errDiv) {
+        errDiv.innerText = "Error: " + data.error;
+        errDiv.style.color = "#f87171";
+      }
+      if (btnUnlock) btnUnlock.disabled = false;
+      if (passInput) {
+        passInput.disabled = false;
+        passInput.style.borderColor = "#f87171";
+        passInput.select();
+        passInput.focus();
+      }
     }
   } catch (err) {
     console.error("Error al desbloquear correo:", err);
-    errDiv.innerText = "Error de conexión con el servidor.";
-    errDiv.style.color = "#f87171";
+    if (errDiv) {
+      errDiv.innerText = "Error de conexión con el servidor.";
+      errDiv.style.color = "#f87171";
+    }
+    if (btnUnlock) btnUnlock.disabled = false;
+    if (passInput) {
+      passInput.disabled = false;
+      passInput.style.borderColor = "#f87171";
+      passInput.select();
+      passInput.focus();
+    }
   }
 }
 
