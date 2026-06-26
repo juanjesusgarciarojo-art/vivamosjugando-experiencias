@@ -1,0 +1,38 @@
+﻿=============================================================================
+TAREA PENDIENTE: IMPLEMENTACIÓN DE ARCHIVOS ADJUNTOS EN CORREOS CORPORATIVOS
+=============================================================================
+
+DESCRIPCIÓN DE LA TAREA:
+Permitir que los administradores y gestores puedan adjuntar múltiples archivos (como imágenes, documentos PDF, planificaciones, etc.) al redactar un nuevo correo electrónico o responder a uno existente en la sección de bandeja de correo corporativo del Mando Central.
+
+ESTADO ACTUAL:
+- La funcionalidad fue desarrollada por completo en la versión v1.1.5 (tanto la interfaz de usuario con chips de previsualización en index.html, la lectura en Base64 en el cliente con dashboard.js, y la codificación multipart/mixed en PHP a través de sockets directos SMTP en mail_bridge.php).
+- Sin embargo, fue REVERTIDA temporalmente y pospuesta a petición del cliente debido a conflictos con la seguridad del hosting.
+
+EL PROBLEMA ENCONTRADO (FIREWALL / MODSECURITY 403 FORBIDDEN):
+Al intentar subir los archivos modificados o guardarlos directamente a través del "Administrador de Archivos" web de Hostinger, el cortafuegos de seguridad del servidor (ModSecurity WAF) bloqueaba la petición web devolviendo un error HTTP "403 Forbidden (Acceso denegado)".
+
+¿Por qué ocurre este bloqueo?
+1. Código de Sockets SMTP directos: El script mail_bridge.php realiza conexiones por socket mediante `fsockopen` y escribe texto plano de comandos SMTP (AUTH LOGIN, MAIL FROM, etc.). Las WAF de los hosting compartidos suelen monitorizar este código de red porque se asemeja al comportamiento de scripts dañinos que envían spam.
+2. Procesamiento de cadenas Base64: Para poder transmitir archivos adjuntos desde el navegador del cliente hasta el backend de PHP, es necesario codificar y decodificar en formato Base64. El WAF de Hostinger detecta funciones como FileReader, `;base64,` o `base64_decode` combinadas con escritura SMTP y las marca como falsos positivos de inyección de código.
+3. El canal de subida web: La interfaz web de Hostinger sube los archivos mediante peticiones HTTP POST, las cuales son analizadas de forma muy estricta por el WAF.
+
+SOLUCIONES A TENER EN CUENTA PARA CUANDO SE VAYA A IMPLEMENTAR:
+Para poder subir los archivos del módulo de adjuntos sin recibir el bloqueo del cortafuegos 403, se debe seguir uno de estos dos caminos:
+
+Opción 1: Subida limpia por FTP/SFTP (Recomendada)
+- En lugar de usar el Administrador de Archivos de la web de Hostinger, el desarrollador o administrador debe subir los archivos index.html, dashboard.js y mail_bridge.php utilizando un cliente de FTP directo como FileZilla o WinSCP.
+- El protocolo FTP no pasa por los filtros de inspección HTTP del cortafuegos web (WAF), por lo que la subida se realizará correctamente y el código se ejecutará sin problemas.
+
+Opción 2: Desactivación temporal de ModSecurity en Hostinger
+- Si se requiere usar el Administrador de Archivos web obligatoriamente:
+  1. Entrar en el panel de administración de Hostinger (hPanel).
+  2. Navegar a "Seguridad" -> "ModSecurity".
+  3. Desactivar temporalmente ModSecurity.
+  4. Subir y guardar los archivos desde la web (se guardarán sin error).
+  5. Volver a activar ModSecurity inmediatamente para mantener la seguridad global del sitio.
+
+NOTAS PARA EL DESARROLLO FUTURO:
+El código completo que funciona para esta característica se encuentra guardado en el historial de commits de GitHub del repositorio vivamosjugando-experiencias en el commit:
+"Implementar adjuntar archivos en envio y respuesta de correos v1.1.5" (Commit Hash: f313ad7...)
+Se puede recuperar e integrar directamente cuando se decida desplegar.
